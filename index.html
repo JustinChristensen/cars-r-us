@@ -293,6 +293,15 @@
                 </select>
             </div>
 
+            <!-- Dealership Location Filter -->
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Dealership Location</h3>
+                <select id="facet-dealership" class="w-full p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Any Location</option>
+                    <!-- Options will be dynamically populated -->
+                </select>
+            </div>
+
             <!-- Features Filter -->
             <div class="mb-4">
                 <h3 class="font-semibold mb-2">Features</h3>
@@ -349,37 +358,74 @@
     </div>
 
     <script>
+        // --- Dealership Data ---
+        const dealerships = [
+            {
+                id: 'downtown',
+                name: 'Wheelio Downtown',
+                address: {
+                    line1: '123 Main Street',
+                    line2: 'Suite 100',
+                    city: 'Springfield',
+                    state: 'IL',
+                    zipCode: '62701'
+                }
+            },
+            {
+                id: 'northside',
+                name: 'Wheelio Northside',
+                address: {
+                    line1: '456 Oak Avenue',
+                    line2: '',
+                    city: 'Springfield',
+                    state: 'IL',
+                    zipCode: '62704'
+                }
+            },
+            {
+                id: 'westend',
+                name: 'Wheelio West End',
+                address: {
+                    line1: '789 Elm Boulevard',
+                    line2: 'Building C',
+                    city: 'Springfield',
+                    state: 'IL',
+                    zipCode: '62712'
+                }
+            }
+        ];
+
         // --- Car Data ---
         const cars = [
-            // Honda Group
-            { id: 'car1', make: 'Honda', model: 'CR-V', price: 30000, mpg: { city: 28, highway: 34 }, seating: 5, features: ['Apple CarPlay', 'AWD', 'sunroof', 'adaptive cruise control'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E0F2F7/0288D1?text=Honda+CR-V' },
-            { id: 'car2', make: 'Honda', model: 'Accord', price: 26000, mpg: { city: 32, highway: 42 }, seating: 5, features: ['Apple CarPlay', 'Honda Sensing', 'sunroof'], safetyRating: 5, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/E0F2F7/0288D1?text=Honda+Accord' },
-            { id: 'car3', make: 'Honda', model: 'Pilot', price: 38000, mpg: { city: 20, highway: 27 }, seating: 8, features: ['Apple CarPlay', 'AWD', '3rd row seating', 'wireless charging'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E0F2F7/0288D1?text=Honda+Pilot' },
+            // Honda Group - Downtown
+            { id: 'car1', make: 'Honda', model: 'CR-V', price: 30000, mpg: { city: 28, highway: 34 }, seating: 5, features: ['Apple CarPlay', 'AWD', 'sunroof', 'adaptive cruise control'], safetyRating: 5, type: 'SUV', dealershipId: 'downtown', imageUrl: 'https://placehold.co/400x250/E0F2F7/0288D1?text=Honda+CR-V' },
+            { id: 'car2', make: 'Honda', model: 'Accord', price: 26000, mpg: { city: 32, highway: 42 }, seating: 5, features: ['Apple CarPlay', 'Honda Sensing', 'sunroof'], safetyRating: 5, type: 'Sedan', dealershipId: 'northside', imageUrl: 'https://placehold.co/400x250/E0F2F7/0288D1?text=Honda+Accord' },
+            { id: 'car3', make: 'Honda', model: 'Pilot', price: 38000, mpg: { city: 20, highway: 27 }, seating: 8, features: ['Apple CarPlay', 'AWD', '3rd row seating', 'wireless charging'], safetyRating: 5, type: 'SUV', dealershipId: 'westend', imageUrl: 'https://placehold.co/400x250/E0F2F7/0288D1?text=Honda+Pilot' },
             
-            // Toyota Group
-            { id: 'car4', make: 'Toyota', model: 'Camry', price: 28000, mpg: { city: 29, highway: 38 }, seating: 5, features: ['Android Auto', 'FWD', 'blind spot monitor'], safetyRating: 5, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/E8F5E9/388E3C?text=Toyota+Camry' },
-            { id: 'car5', make: 'Toyota', model: 'RAV4', price: 32000, mpg: { city: 27, highway: 35 }, seating: 5, features: ['Apple CarPlay', 'AWD', 'Toyota Safety Sense'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E8F5E9/388E3C?text=Toyota+RAV4' },
-            { id: 'car6', make: 'Toyota', model: 'Highlander', price: 40000, mpg: { city: 21, highway: 29 }, seating: 8, features: ['Apple CarPlay', 'AWD', '3rd row seating', 'JBL audio'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E8F5E9/388E3C?text=Toyota+Highlander' },
+            // Toyota Group - Distributed
+            { id: 'car4', make: 'Toyota', model: 'Camry', price: 28000, mpg: { city: 29, highway: 38 }, seating: 5, features: ['Android Auto', 'FWD', 'blind spot monitor'], safetyRating: 5, type: 'Sedan', dealershipId: 'downtown', imageUrl: 'https://placehold.co/400x250/E8F5E9/388E3C?text=Toyota+Camry' },
+            { id: 'car5', make: 'Toyota', model: 'RAV4', price: 32000, mpg: { city: 27, highway: 35 }, seating: 5, features: ['Apple CarPlay', 'AWD', 'Toyota Safety Sense'], safetyRating: 5, type: 'SUV', dealershipId: 'northside', imageUrl: 'https://placehold.co/400x250/E8F5E9/388E3C?text=Toyota+RAV4' },
+            { id: 'car6', make: 'Toyota', model: 'Highlander', price: 40000, mpg: { city: 21, highway: 29 }, seating: 8, features: ['Apple CarPlay', 'AWD', '3rd row seating', 'JBL audio'], safetyRating: 5, type: 'SUV', dealershipId: 'westend', imageUrl: 'https://placehold.co/400x250/E8F5E9/388E3C?text=Toyota+Highlander' },
             
-            // Ford Group
-            { id: 'car7', make: 'Ford', model: 'F-150', price: 40000, mpg: { city: 20, highway: 26 }, seating: 6, features: ['Towing Package', '4x4', 'large bed'], safetyRating: 4, type: 'Truck', imageUrl: 'https://placehold.co/400x250/E0F7FA/00BCD4?text=Ford+F-150' },
-            { id: 'car8', make: 'Ford', model: 'Explorer', price: 36000, mpg: { city: 21, highway: 28 }, seating: 7, features: ['Apple CarPlay', 'AWD', '3rd row seating', 'SYNC 4'], safetyRating: 4, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E0F7FA/00BCD4?text=Ford+Explorer' },
-            { id: 'car9', make: 'Ford', model: 'Mustang Mach-E', price: 48000, mpg: { city: 105, highway: 93 }, seating: 5, features: ['Fast Charging', 'AWD', 'panoramic glass roof', 'SYNC 4A'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/E0F7FA/00BCD4?text=Ford+Mustang+Mach-E' },
+            // Ford Group - Distributed
+            { id: 'car7', make: 'Ford', model: 'F-150', price: 40000, mpg: { city: 20, highway: 26 }, seating: 6, features: ['Towing Package', '4x4', 'large bed'], safetyRating: 4, type: 'Truck', dealershipId: 'downtown', imageUrl: 'https://placehold.co/400x250/E0F7FA/00BCD4?text=Ford+F-150' },
+            { id: 'car8', make: 'Ford', model: 'Explorer', price: 36000, mpg: { city: 21, highway: 28 }, seating: 7, features: ['Apple CarPlay', 'AWD', '3rd row seating', 'SYNC 4'], safetyRating: 4, type: 'SUV', dealershipId: 'northside', imageUrl: 'https://placehold.co/400x250/E0F7FA/00BCD4?text=Ford+Explorer' },
+            { id: 'car9', make: 'Ford', model: 'Mustang Mach-E', price: 48000, mpg: { city: 105, highway: 93 }, seating: 5, features: ['Fast Charging', 'AWD', 'panoramic glass roof', 'SYNC 4A'], safetyRating: 5, type: 'EV', dealershipId: 'westend', imageUrl: 'https://placehold.co/400x250/E0F7FA/00BCD4?text=Ford+Mustang+Mach-E' },
             
-            // Tesla Group
-            { id: 'car10', make: 'Tesla', model: 'Model 3', price: 45000, mpg: { city: 132, highway: 121 }, seating: 5, features: ['Autopilot', 'AWD', 'panoramic glass roof', 'fast charging'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/F3E5F5/7B1FA2?text=Tesla+Model+3' },
-            { id: 'car11', make: 'Tesla', model: 'Model Y', price: 52000, mpg: { city: 125, highway: 115 }, seating: 7, features: ['Autopilot', 'AWD', 'panoramic glass roof', 'fast charging', '3rd row seating'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/F3E5F5/7B1FA2?text=Tesla+Model+Y' },
+            // Tesla Group - Distributed
+            { id: 'car10', make: 'Tesla', model: 'Model 3', price: 45000, mpg: { city: 132, highway: 121 }, seating: 5, features: ['Autopilot', 'AWD', 'panoramic glass roof', 'fast charging'], safetyRating: 5, type: 'EV', dealershipId: 'downtown', imageUrl: 'https://placehold.co/400x250/F3E5F5/7B1FA2?text=Tesla+Model+3' },
+            { id: 'car11', make: 'Tesla', model: 'Model Y', price: 52000, mpg: { city: 125, highway: 115 }, seating: 7, features: ['Autopilot', 'AWD', 'panoramic glass roof', 'fast charging', '3rd row seating'], safetyRating: 5, type: 'EV', dealershipId: 'northside', imageUrl: 'https://placehold.co/400x250/F3E5F5/7B1FA2?text=Tesla+Model+Y' },
             
-            // Chevrolet Group
-            { id: 'car12', make: 'Chevrolet', model: 'Bolt EV', price: 27000, mpg: { city: 120, highway: 100 }, seating: 5, features: ['Fast Charging', 'Apple CarPlay', 'Backup Camera'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/E1F5FE/0277BD?text=Chevrolet+Bolt+EV' },
-            { id: 'car13', make: 'Chevrolet', model: 'Tahoe', price: 52000, mpg: { city: 16, highway: 20 }, seating: 9, features: ['Towing Package', '4x4', '3rd row seating', 'Bose audio'], safetyRating: 4, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E1F5FE/0277BD?text=Chevrolet+Tahoe' },
+            // Chevrolet Group - Distributed
+            { id: 'car12', make: 'Chevrolet', model: 'Bolt EV', price: 27000, mpg: { city: 120, highway: 100 }, seating: 5, features: ['Fast Charging', 'Apple CarPlay', 'Backup Camera'], safetyRating: 5, type: 'EV', dealershipId: 'westend', imageUrl: 'https://placehold.co/400x250/E1F5FE/0277BD?text=Chevrolet+Bolt+EV' },
+            { id: 'car13', make: 'Chevrolet', model: 'Tahoe', price: 52000, mpg: { city: 16, highway: 20 }, seating: 9, features: ['Towing Package', '4x4', '3rd row seating', 'Bose audio'], safetyRating: 4, type: 'SUV', dealershipId: 'downtown', imageUrl: 'https://placehold.co/400x250/E1F5FE/0277BD?text=Chevrolet+Tahoe' },
             
-            // BMW Group
-            { id: 'car14', make: 'BMW', model: 'X5', price: 60000, mpg: { city: 21, highway: 26 }, seating: 5, features: ['Leather Seats', 'Panoramic Sunroof', 'Heated Seats', 'Navigation'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/FBE9E7/D84315?text=BMW+X5' },
-            { id: 'car15', make: 'BMW', model: '3 Series', price: 41000, mpg: { city: 26, highway: 36 }, seating: 5, features: ['Leather Seats', 'Heated Seats', 'Navigation', 'Harman Kardon audio'], safetyRating: 5, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/FBE9E7/D84315?text=BMW+3+Series' },
+            // BMW Group - Distributed
+            { id: 'car14', make: 'BMW', model: 'X5', price: 60000, mpg: { city: 21, highway: 26 }, seating: 5, features: ['Leather Seats', 'Panoramic Sunroof', 'Heated Seats', 'Navigation'], safetyRating: 5, type: 'SUV', dealershipId: 'northside', imageUrl: 'https://placehold.co/400x250/FBE9E7/D84315?text=BMW+X5' },
+            { id: 'car15', make: 'BMW', model: '3 Series', price: 41000, mpg: { city: 26, highway: 36 }, seating: 5, features: ['Leather Seats', 'Heated Seats', 'Navigation', 'Harman Kardon audio'], safetyRating: 5, type: 'Sedan', dealershipId: 'westend', imageUrl: 'https://placehold.co/400x250/FBE9E7/D84315?text=BMW+3+Series' },
             
-            // Hyundai Group
-            { id: 'car16', make: 'Hyundai', model: 'Elantra', price: 22000, mpg: { city: 31, highway: 41 }, seating: 5, features: ['Apple CarPlay', 'Android Auto', 'Lane Keeping Assist'], safetyRating: 4, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/FCE4EC/AD1457?text=Hyundai+Elantra' },
+            // Hyundai Group - Downtown
+            { id: 'car16', make: 'Hyundai', model: 'Elantra', price: 22000, mpg: { city: 31, highway: 41 }, seating: 5, features: ['Apple CarPlay', 'Android Auto', 'Lane Keeping Assist'], safetyRating: 4, type: 'Sedan', dealershipId: 'downtown', imageUrl: 'https://placehold.co/400x250/FCE4EC/AD1457?text=Hyundai+Elantra' },
         ];
 
         // --- User Preferences (will be updated by chat and facets) ---
@@ -389,7 +435,8 @@
             minMPGHighway: null,
             seatingCapacity: null,
             carType: null, // Can be a string like 'SUV' or an array if multiple types are allowed
-            features: null
+            features: null,
+            dealership: null // New preference for dealership location
         };
 
         // --- Guided Experience State ---
@@ -415,6 +462,11 @@
                 question: "How many seats do you need? (2, 4, 5, 6, 7, 8, or 9)",
                 preference: 'seatingCapacity',
                 pattern: /(\d+)\s*seats?/i
+            },
+            {
+                question: "Which dealership location would you prefer? (Downtown, Northside, West End, or 'no preference')",
+                preference: 'dealership',
+                pattern: /(downtown|northside|north side|west end|westend|no preference)/i
             },
             {
                 question: "Is fuel efficiency important to you? (e.g., 'yes', 'at least 30 mpg', or 'not important')",
@@ -451,6 +503,7 @@
         const facetMpgRange = document.getElementById('facet-mpg-range');
         const facetMpgValueSpan = document.getElementById('facet-mpg-value');
         const facetSeatingSelect = document.getElementById('facet-seating');
+        const facetDealershipSelect = document.getElementById('facet-dealership');
         const facetFeaturesDiv = document.getElementById('facet-features');
         const facetResetButton = document.getElementById('facet-reset-button');
 
@@ -697,6 +750,25 @@
                             addChatMessage(`Great! I'll prioritize cars with: ${foundFeatures.join(', ')}.`, 'ai');
                             processed = true;
                         }
+                    }
+                    break;
+
+                case 'dealership':
+                    if (lowerInput.includes('no preference')) {
+                        addChatMessage("No problem! I'll show cars from all our locations.", 'ai');
+                        processed = true;
+                    } else if (lowerInput.includes('downtown')) {
+                        userPreferences.dealership = { value: 'downtown', weight: 1, description: "Downtown location" };
+                        addChatMessage("Great choice! Our Downtown location at 123 Main Street is very convenient.", 'ai');
+                        processed = true;
+                    } else if (lowerInput.includes('northside') || lowerInput.includes('north side')) {
+                        userPreferences.dealership = { value: 'northside', weight: 1, description: "Northside location" };
+                        addChatMessage("Perfect! Our Northside location at 456 Oak Avenue has a great selection.", 'ai');
+                        processed = true;
+                    } else if (lowerInput.includes('west end') || lowerInput.includes('westend')) {
+                        userPreferences.dealership = { value: 'westend', weight: 1, description: "West End location" };
+                        addChatMessage("Excellent! Our West End location at 789 Elm Boulevard is our newest facility.", 'ai');
+                        processed = true;
                     }
                     break;
             }
@@ -963,6 +1035,26 @@
                     aiResponse = "Looking for cars with good seating capacity, at least 5 seats.";
                     preferenceUpdated = true;
                 }
+            } else if (lowerInput.includes("location") || lowerInput.includes("dealership") || lowerInput.includes("downtown") || lowerInput.includes("northside") || lowerInput.includes("north side") || lowerInput.includes("west end") || lowerInput.includes("westend")) {
+                if (lowerInput.includes("downtown")) {
+                    const dealership = dealerships.find(d => d.id === 'downtown');
+                    userPreferences.dealership = { value: 'downtown', weight: 1, description: "Downtown location" };
+                    aiResponse = `Great choice! Focusing on cars available at our ${dealership.name} location at ${dealership.address.line1}, ${dealership.address.city}.`;
+                    preferenceUpdated = true;
+                } else if (lowerInput.includes("northside") || lowerInput.includes("north side")) {
+                    const dealership = dealerships.find(d => d.id === 'northside');
+                    userPreferences.dealership = { value: 'northside', weight: 1, description: "Northside location" };
+                    aiResponse = `Perfect! Showing cars from our ${dealership.name} location at ${dealership.address.line1}, ${dealership.address.city}.`;
+                    preferenceUpdated = true;
+                } else if (lowerInput.includes("west end") || lowerInput.includes("westend")) {
+                    const dealership = dealerships.find(d => d.id === 'westend');
+                    userPreferences.dealership = { value: 'westend', weight: 1, description: "West End location" };
+                    aiResponse = `Excellent! Looking at cars from our ${dealership.name} location at ${dealership.address.line1}, ${dealership.address.city}.`;
+                    preferenceUpdated = true;
+                } else {
+                    // General dealership or location inquiry
+                    aiResponse = "We have three convenient locations: Downtown (123 Main Street), Northside (456 Oak Avenue), and West End (789 Elm Boulevard). Which location interests you?";
+                }
             } else if (lowerInput.includes("reset") || lowerInput.includes("clear preferences")) {
                 resetPreferences(); // Call the new reset function
                 aiResponse = "Okay, I've cleared all your preferences. What would you like to start with? You can also say 'guide me' for a step-by-step experience!";
@@ -1071,6 +1163,19 @@
                         matchedCriteria.push(`Matches desired car type: ${car.type}.`);
                     } else {
                         unmatchedCriteria.push(`Does not match desired car type (actual: ${car.type}, desired: ${userPreferences.carType.value}).`);
+                    }
+                }
+
+                // --- Evaluate Dealership Location ---
+                if (userPreferences.dealership && userPreferences.dealership.value) {
+                    if (car.dealershipId === userPreferences.dealership.value) {
+                        score += userPreferences.dealership.weight;
+                        const dealership = dealerships.find(d => d.id === car.dealershipId);
+                        matchedCriteria.push(`Available at preferred ${dealership.name} location.`);
+                    } else {
+                        const carDealership = dealerships.find(d => d.id === car.dealershipId);
+                        const preferredDealership = dealerships.find(d => d.id === userPreferences.dealership.value);
+                        unmatchedCriteria.push(`Located at ${carDealership.name} instead of preferred ${preferredDealership.name}.`);
                     }
                 }
 
@@ -1187,6 +1292,10 @@
                             <div class="flex justify-between">
                                 <span>Safety Rating:</span>
                                 <span class="font-medium">${'★'.repeat(car.safetyRating)}${' ☆'.repeat(5 - car.safetyRating)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Location:</span>
+                                <span class="font-medium">${dealerships.find(d => d.id === car.dealershipId).name.replace('Wheelio ', '')}</span>
                             </div>
                         </div>
                         
@@ -1312,6 +1421,14 @@
                 facetBrandSelect.appendChild(option);
             });
 
+            // Populate Dealership Select
+            dealerships.forEach(dealership => {
+                const option = document.createElement('option');
+                option.value = dealership.id;
+                option.textContent = dealership.name.replace('Wheelio ', '');
+                facetDealershipSelect.appendChild(option);
+            });
+
             // Populate Car Type Checkboxes
             const carTypes = [...new Set(cars.map(car => car.type))].sort();
             carTypes.forEach(type => {
@@ -1352,6 +1469,7 @@
             facetPriceMax.addEventListener('input', handleFacetChange);
             facetMpgRange.addEventListener('input', handleFacetChange);
             facetSeatingSelect.addEventListener('change', handleFacetChange);
+            facetDealershipSelect.addEventListener('change', handleFacetChange);
             facetFeaturesDiv.addEventListener('change', handleFacetChange);
             facetResetButton.addEventListener('click', resetPreferences);
 
@@ -1395,6 +1513,12 @@
             
             userPreferences.minMPGHighway = parseInt(facetMpgRange.value) > 10 ? { value: parseInt(facetMpgRange.value), weight: 2, description: `highway MPG of at least ${parseInt(facetMpgRange.value)}` } : null;
             userPreferences.seatingCapacity = parseInt(facetSeatingSelect.value) > 0 ? { value: parseInt(facetSeatingSelect.value), weight: 2, description: `at least ${parseInt(facetSeatingSelect.value)} seats` } : null;
+            
+            userPreferences.dealership = facetDealershipSelect.value ? { 
+                value: facetDealershipSelect.value, 
+                weight: 1, 
+                description: `${dealerships.find(d => d.id === facetDealershipSelect.value).name.replace('Wheelio ', '')} location` 
+            } : null;
 
             const selectedCarTypes = Array.from(facetCarTypeDiv.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
             userPreferences.carType = selectedCarTypes.length > 0 ? { value: selectedCarTypes[0], weight: 3, description: `car type: ${selectedCarTypes[0]}` } : null; // For simplicity, only take the first selected type if multiple are allowed by UI
@@ -1427,6 +1551,9 @@
             // Update Seating Select
             facetSeatingSelect.value = userPreferences.seatingCapacity ? userPreferences.seatingCapacity.value : '';
 
+            // Update Dealership Select
+            facetDealershipSelect.value = userPreferences.dealership ? userPreferences.dealership.value : '';
+
             // Update Car Type Checkboxes
             const carTypeCheckboxes = facetCarTypeDiv.querySelectorAll('input[type="checkbox"]');
             carTypeCheckboxes.forEach(cb => {
@@ -1447,7 +1574,8 @@
                 minMPGHighway: null,
                 seatingCapacity: null,
                 carType: null,
-                features: null
+                features: null,
+                dealership: null
             };
             isGuided = false;
             guidedStep = 0;
