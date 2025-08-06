@@ -485,6 +485,9 @@
                 
                 if (perfectMatches.length === 1) {
                     addChatMessage(`Perfect! Based on your preferences, I found the ideal car for you: the ${perfectMatches[0].make} ${perfectMatches[0].model}. It's highlighted above!`, 'ai');
+                    setTimeout(() => {
+                        addChatMessage(`This car matches all your criteria perfectly! Ready to make it yours? Give us a call at (555) CAR-SALE to schedule a test drive and complete your purchase. Our team is standing by to help!`, 'ai');
+                    }, 1500);
                     isGuided = false;
                 } else if (perfectMatches.length === 0) {
                     addChatMessage("I couldn't find a perfect match with all your criteria, but I've ranked the cars by how well they match your preferences. The top ones are your best options!", 'ai');
@@ -611,7 +614,22 @@
                 guidedStep++;
                 updateFacetUI();
                 updateCarDisplay();
-                setTimeout(() => askNextGuidedQuestion(), 500); // Small delay before next question
+                
+                // Check if we now have a single perfect match and stop guided experience
+                const rankedCars = rankCars(cars, userPreferences);
+                const perfectMatches = rankedCars.filter(car => car.isPerfectMatch);
+                
+                if (perfectMatches.length === 1) {
+                    setTimeout(() => {
+                        addChatMessage(`🎉 Perfect! I found your ideal match: the ${perfectMatches[0].make} ${perfectMatches[0].model}. This car meets all your criteria perfectly!`, 'ai');
+                        setTimeout(() => {
+                            addChatMessage(`Ready to make it yours? Give us a call at (555) CAR-SALE to schedule a test drive and complete your purchase. Our team is standing by to help!`, 'ai');
+                        }, 1500);
+                    }, 500);
+                    isGuided = false; // Stop the guided experience
+                } else {
+                    setTimeout(() => askNextGuidedQuestion(), 500); // Small delay before next question
+                }
             } else {
                 addChatMessage("I didn't quite understand that. Could you please try again?", 'ai');
             }
@@ -779,6 +797,19 @@
             if (preferenceUpdated) {
                 updateFacetUI(); // Update facets after AI changes preferences
                 updateCarDisplay(); // Re-rank and re-render if preferences changed
+                
+                // Check if we now have a single perfect match
+                const rankedCars = rankCars(cars, userPreferences);
+                const perfectMatches = rankedCars.filter(car => car.isPerfectMatch);
+                
+                if (perfectMatches.length === 1) {
+                    setTimeout(() => {
+                        addChatMessage(`🎉 Fantastic! I found your perfect match: the ${perfectMatches[0].make} ${perfectMatches[0].model}. This car meets all your requirements perfectly!`, 'ai');
+                        setTimeout(() => {
+                            addChatMessage(`Ready to drive home in your ideal car? Call us now at (555) CAR-SALE to schedule your test drive and secure this perfect match. Don't let it slip away!`, 'ai');
+                        }, 2000);
+                    }, 1000);
+                }
             }
         }
 
