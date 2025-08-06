@@ -241,9 +241,19 @@
 
             <!-- Price Filter -->
             <div class="mb-4">
-                <h3 class="font-semibold mb-2">Max Price</h3>
-                <input type="range" id="facet-price-range" min="10000" max="100000" step="1000" value="100000" class="w-full">
-                <p class="text-sm text-right mt-1"><span id="facet-price-value">$100,000</span> or less</p>
+                <h3 class="font-semibold mb-2">Price Range</h3>
+                <div class="space-y-2">
+                    <div>
+                        <label for="facet-price-min" class="text-sm">Min Price</label>
+                        <input type="range" id="facet-price-min" min="10000" max="100000" step="1000" value="10000" class="w-full">
+                        <p class="text-sm text-right mt-1">$<span id="facet-price-min-value">10,000</span></p>
+                    </div>
+                    <div>
+                        <label for="facet-price-max" class="text-sm">Max Price</label>
+                        <input type="range" id="facet-price-max" min="10000" max="100000" step="1000" value="100000" class="w-full">
+                        <p class="text-sm text-right mt-1">$<span id="facet-price-max-value">100,000</span></p>
+                    </div>
+                </div>
             </div>
 
             <!-- MPG Filter -->
@@ -288,20 +298,21 @@
             </div>
         </div>
 
+        <!-- Drawer Toggle Button - Positioned to hover outside chat window -->
+        <button id="drawer-toggle" class="fixed top-24 right-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 z-30 bg-white shadow-lg border border-gray-200">
+            <!-- Hamburger/Close Icon - using SVG for simplicity -->
+            <svg id="toggle-icon-open" class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <svg id="toggle-icon-closed" class="w-6 h-6 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+
         <!-- Chat Window (Right Sidebar) - Collapsible drawer -->
         <div id="chat-drawer" class="flex flex-col chat-window chat-drawer-open">
             <div id="chat-drawer-header" class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold text-gray-800 flex-grow text-left">AI Car Assistant</h2>
-                <!-- Drawer Toggle Button - Positioned inside chat window header -->
-                <button id="drawer-toggle" class="p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 z-20 bg-white shadow-sm">
-                    <!-- Hamburger/Close Icon - using SVG for simplicity -->
-                    <svg id="toggle-icon-open" class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                    <svg id="toggle-icon-closed" class="w-6 h-6 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
             </div>
             <div id="chat-content" class="flex-grow flex flex-col">
                 <div id="chat-messages" class="flex-grow overflow-y-auto mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
@@ -359,7 +370,7 @@
         // --- User Preferences (will be updated by chat and facets) ---
         let userPreferences = {
             brand: null,
-            maxPrice: null,
+            priceRange: null, // Changed from maxPrice to priceRange: {min: number, max: number}
             minMPGHighway: null,
             seatingCapacity: null,
             carType: null, // Can be a string like 'SUV' or an array if multiple types are allowed
@@ -382,8 +393,10 @@
         // Facet DOM Elements
         const facetBrandSelect = document.getElementById('facet-brand');
         const facetCarTypeDiv = document.getElementById('facet-car-type');
-        const facetPriceRange = document.getElementById('facet-price-range');
-        const facetPriceValueSpan = document.getElementById('facet-price-value');
+        const facetPriceMin = document.getElementById('facet-price-min');
+        const facetPriceMax = document.getElementById('facet-price-max');
+        const facetPriceMinValueSpan = document.getElementById('facet-price-min-value');
+        const facetPriceMaxValueSpan = document.getElementById('facet-price-max-value');
         const facetMpgRange = document.getElementById('facet-mpg-range');
         const facetMpgValueSpan = document.getElementById('facet-mpg-value');
         const facetSeatingSelect = document.getElementById('facet-seating');
@@ -457,15 +470,37 @@
                     preferenceUpdated = true;
                 }
             } else if (lowerInput.includes("price") || lowerInput.includes("budget") || lowerInput.includes("cost")) {
-                const match = lowerInput.match(/under\s*\$*(\d+k|\d+)/);
-                if (match) {
-                    let priceValue = parseInt(match[1].replace('k', '000'), 10);
-                    userPreferences.maxPrice = { value: priceValue, weight: 3, description: `price under $${priceValue.toLocaleString()}` };
-                    aiResponse = `Searching for cars under $${priceValue.toLocaleString()}.`;
+                const rangeMatch = lowerInput.match(/between\s*\$*(\d+k?|\d+)\s*and\s*\$*(\d+k?|\d+)/);
+                const underMatch = lowerInput.match(/under\s*\$*(\d+k|\d+)/);
+                const overMatch = lowerInput.match(/over\s*\$*(\d+k|\d+)/);
+                const aroundMatch = lowerInput.match(/around\s*\$*(\d+k|\d+)/);
+                
+                if (rangeMatch) {
+                    let minPrice = parseInt(rangeMatch[1].replace('k', '000'), 10);
+                    let maxPrice = parseInt(rangeMatch[2].replace('k', '000'), 10);
+                    userPreferences.priceRange = { value: {min: minPrice, max: maxPrice}, weight: 3, description: `price between $${minPrice.toLocaleString()} and $${maxPrice.toLocaleString()}` };
+                    aiResponse = `Searching for cars between $${minPrice.toLocaleString()} and $${maxPrice.toLocaleString()}.`;
+                    preferenceUpdated = true;
+                } else if (underMatch) {
+                    let maxPrice = parseInt(underMatch[1].replace('k', '000'), 10);
+                    userPreferences.priceRange = { value: {min: 10000, max: maxPrice}, weight: 3, description: `price under $${maxPrice.toLocaleString()}` };
+                    aiResponse = `Searching for cars under $${maxPrice.toLocaleString()}.`;
+                    preferenceUpdated = true;
+                } else if (overMatch) {
+                    let minPrice = parseInt(overMatch[1].replace('k', '000'), 10);
+                    userPreferences.priceRange = { value: {min: minPrice, max: 100000}, weight: 3, description: `price over $${minPrice.toLocaleString()}` };
+                    aiResponse = `Searching for cars over $${minPrice.toLocaleString()}.`;
+                    preferenceUpdated = true;
+                } else if (aroundMatch) {
+                    let targetPrice = parseInt(aroundMatch[1].replace('k', '000'), 10);
+                    let minPrice = Math.max(10000, targetPrice - 5000);
+                    let maxPrice = Math.min(100000, targetPrice + 5000);
+                    userPreferences.priceRange = { value: {min: minPrice, max: maxPrice}, weight: 3, description: `price around $${targetPrice.toLocaleString()}` };
+                    aiResponse = `Searching for cars around $${targetPrice.toLocaleString()} (between $${minPrice.toLocaleString()} and $${maxPrice.toLocaleString()}).`;
                     preferenceUpdated = true;
                 } else {
-                    userPreferences.maxPrice = { value: 40000, weight: 3, description: "affordable price" };
-                    aiResponse = "Okay, I'll look for cars that are more affordable.";
+                    userPreferences.priceRange = { value: {min: 10000, max: 40000}, weight: 3, description: "affordable price range" };
+                    aiResponse = "Okay, I'll look for cars in an affordable price range.";
                     preferenceUpdated = true;
                 }
             } else if (lowerInput.includes("awd") || lowerInput.includes("all-wheel drive")) {
@@ -561,12 +596,14 @@
                 }
 
                 // --- Evaluate Price ---
-                if (userPreferences.maxPrice && userPreferences.maxPrice.value < 100000) { // Assuming 100k is max for "no preference"
-                    if (car.price <= userPreferences.maxPrice.value) {
-                        score += userPreferences.maxPrice.weight;
-                        matchedCriteria.push(`Meets price preference ($${car.price.toLocaleString()} vs. desired $${userPreferences.maxPrice.value.toLocaleString()} or less).`);
+                if (userPreferences.priceRange && userPreferences.priceRange.value) {
+                    const minPrice = userPreferences.priceRange.value.min;
+                    const maxPrice = userPreferences.priceRange.value.max;
+                    if (car.price >= minPrice && car.price <= maxPrice) {
+                        score += userPreferences.priceRange.weight;
+                        matchedCriteria.push(`Meets price range preference ($${car.price.toLocaleString()} within $${minPrice.toLocaleString()} - $${maxPrice.toLocaleString()}).`);
                     } else {
-                        unmatchedCriteria.push(`Does not meet price preference (actual: $${car.price.toLocaleString()}, desired: $${userPreferences.maxPrice.value.toLocaleString()} or less).`);
+                        unmatchedCriteria.push(`Does not meet price range preference (actual: $${car.price.toLocaleString()}, desired: $${minPrice.toLocaleString()} - $${maxPrice.toLocaleString()}).`);
                     }
                 }
 
@@ -630,12 +667,12 @@
                 };
             });
 
-            // Sort: perfect matches first, then by score, then by price (ascending) as a tie-breaker
+            // Sort: perfect matches first, then by score, then randomize for ties
             rankedCars.sort((a, b) => {
                 if (a.isPerfectMatch && !b.isPerfectMatch) return -1;
                 if (!a.isPerfectMatch && b.isPerfectMatch) return 1;
                 if (b.score !== a.score) return b.score - a.score; // Higher score first
-                return a.price - b.price; // Lower price first for ties
+                return Math.random() - 0.5; // Randomize for ties instead of price sorting
             });
 
             return rankedCars;
@@ -878,23 +915,43 @@
             });
 
             // Set initial values for sliders and display them
-            facetPriceRange.value = 100000; // Max price initially
-            facetPriceValueSpan.textContent = `$${parseInt(facetPriceRange.value).toLocaleString()}`;
+            facetPriceMin.value = 10000; // Min price initially
+            facetPriceMax.value = 100000; // Max price initially
+            facetPriceMinValueSpan.textContent = `${parseInt(facetPriceMin.value).toLocaleString()}`;
+            facetPriceMaxValueSpan.textContent = `${parseInt(facetPriceMax.value).toLocaleString()}`;
             facetMpgRange.value = 10; // Min MPG initially
             facetMpgValueSpan.textContent = `${parseInt(facetMpgRange.value)}`;
 
             // Add event listeners for facets
             facetBrandSelect.addEventListener('change', handleFacetChange);
             facetCarTypeDiv.addEventListener('change', handleFacetChange);
-            facetPriceRange.addEventListener('input', handleFacetChange); // Use 'input' for continuous update
+            facetPriceMin.addEventListener('input', handleFacetChange); // Use 'input' for continuous update
+            facetPriceMax.addEventListener('input', handleFacetChange);
             facetMpgRange.addEventListener('input', handleFacetChange);
             facetSeatingSelect.addEventListener('change', handleFacetChange);
             facetFeaturesDiv.addEventListener('change', handleFacetChange);
             facetResetButton.addEventListener('click', resetPreferences);
 
             // Update display for sliders on input
-            facetPriceRange.addEventListener('input', () => {
-                facetPriceValueSpan.textContent = `$${parseInt(facetPriceRange.value).toLocaleString()}`;
+            facetPriceMin.addEventListener('input', () => {
+                const minVal = parseInt(facetPriceMin.value);
+                const maxVal = parseInt(facetPriceMax.value);
+                // Ensure min doesn't exceed max
+                if (minVal > maxVal) {
+                    facetPriceMax.value = minVal;
+                    facetPriceMaxValueSpan.textContent = `${minVal.toLocaleString()}`;
+                }
+                facetPriceMinValueSpan.textContent = `${minVal.toLocaleString()}`;
+            });
+            facetPriceMax.addEventListener('input', () => {
+                const minVal = parseInt(facetPriceMin.value);
+                const maxVal = parseInt(facetPriceMax.value);
+                // Ensure max doesn't go below min
+                if (maxVal < minVal) {
+                    facetPriceMin.value = maxVal;
+                    facetPriceMinValueSpan.textContent = `${maxVal.toLocaleString()}`;
+                }
+                facetPriceMaxValueSpan.textContent = `${maxVal.toLocaleString()}`;
             });
             facetMpgRange.addEventListener('input', () => {
                 facetMpgValueSpan.textContent = `${parseInt(facetMpgRange.value)}`;
@@ -904,7 +961,15 @@
         function handleFacetChange() {
             // Update userPreferences based on current facet values
             userPreferences.brand = facetBrandSelect.value ? { value: facetBrandSelect.value, weight: 2, description: `brand preference: ${facetBrandSelect.value}` } : null;
-            userPreferences.maxPrice = parseInt(facetPriceRange.value) < 100000 ? { value: parseInt(facetPriceRange.value), weight: 3, description: `price under $${parseInt(facetPriceRange.value).toLocaleString()}` } : null;
+            
+            const minPrice = parseInt(facetPriceMin.value);
+            const maxPrice = parseInt(facetPriceMax.value);
+            userPreferences.priceRange = (minPrice > 10000 || maxPrice < 100000) ? { 
+                value: {min: minPrice, max: maxPrice}, 
+                weight: 3, 
+                description: `price range: $${minPrice.toLocaleString()} - $${maxPrice.toLocaleString()}` 
+            } : null;
+            
             userPreferences.minMPGHighway = parseInt(facetMpgRange.value) > 10 ? { value: parseInt(facetMpgRange.value), weight: 2, description: `highway MPG of at least ${parseInt(facetMpgRange.value)}` } : null;
             userPreferences.seatingCapacity = parseInt(facetSeatingSelect.value) > 0 ? { value: parseInt(facetSeatingSelect.value), weight: 2, description: `at least ${parseInt(facetSeatingSelect.value)} seats` } : null;
 
@@ -921,9 +986,16 @@
             // Update Brand Select
             facetBrandSelect.value = userPreferences.brand ? userPreferences.brand.value : '';
 
-            // Update Price Slider
-            facetPriceRange.value = userPreferences.maxPrice ? userPreferences.maxPrice.value : 100000;
-            facetPriceValueSpan.textContent = `$${parseInt(facetPriceRange.value).toLocaleString()}`;
+            // Update Price Sliders
+            if (userPreferences.priceRange) {
+                facetPriceMin.value = userPreferences.priceRange.value.min;
+                facetPriceMax.value = userPreferences.priceRange.value.max;
+            } else {
+                facetPriceMin.value = 10000;
+                facetPriceMax.value = 100000;
+            }
+            facetPriceMinValueSpan.textContent = `${parseInt(facetPriceMin.value).toLocaleString()}`;
+            facetPriceMaxValueSpan.textContent = `${parseInt(facetPriceMax.value).toLocaleString()}`;
 
             // Update MPG Slider
             facetMpgRange.value = userPreferences.minMPGHighway ? userPreferences.minMPGHighway.value : 10;
@@ -948,7 +1020,7 @@
         function resetPreferences() {
             userPreferences = {
                 brand: null,
-                maxPrice: null,
+                priceRange: null,
                 minMPGHighway: null,
                 seatingCapacity: null,
                 carType: null,
