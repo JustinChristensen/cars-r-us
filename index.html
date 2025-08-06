@@ -34,16 +34,20 @@
 
         /* Active (perfect match) styling */
         .car-item.active {
-            border-color: #3b82f6;
-            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.2);
-            background-color: #eff6ff;
+            border-color: #2563eb; /* More vibrant blue */
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
+            background-color: #dbeafe; /* Lighter blue background */
         }
 
         /* Inactive (partial/no match) styling */
         .car-item.inactive {
-            border-color: #cbd5e1;
-            background-color: #f8fafc;
-            opacity: 0.7;
+            border-color: #e5e7eb; /* Even lighter border */
+            background-color: #f3f4f6; /* Muted gray background */
+            /* Remove muted text color from container, move to .car-content below */
+        }
+        .car-item.inactive .car-content {
+            opacity: 0.5;
+            color: #94a3b8; /* Muted text color only for content */
         }
 
         .chat-window {
@@ -84,7 +88,7 @@
         .tooltip {
             position: absolute;
             background-color: rgba(0, 0, 0, 0.85);
-            color: white;
+            color: white !important;
             padding: 8px 12px;
             border-radius: 8px;
             font-size: 0.875rem;
@@ -99,6 +103,11 @@
             top: 100%;
             bottom: auto;
             margin-top: 10px;
+        }
+        .car-item .tooltip {
+            opacity: 1 !important;
+            color: white !important;
+            background-color: rgba(0, 0, 0, 0.85) !important;
         }
 
         .car-item:hover .tooltip {
@@ -168,7 +177,7 @@
         <!-- Chat Window (Right Sidebar) - Collapsible drawer -->
         <div id="chat-drawer" class="flex flex-col chat-window chat-drawer-open">
             <div id="chat-drawer-header" class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-gray-800 flex-grow text-center">AI Car Assistant</h2>
+                <h2 class="text-2xl font-bold text-gray-800 flex-grow text-left">AI Car Assistant</h2>
             </div>
             <div id="chat-content" class="flex-grow flex flex-col">
                 <div id="chat-messages" class="flex-grow overflow-y-auto mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50"> <!-- Re-added overflow-y-auto -->
@@ -192,22 +201,35 @@
     <script>
         // --- Car Data ---
         const cars = [
+            // Honda Group
             { id: 'car1', make: 'Honda', model: 'CR-V', price: 30000, mpg: { city: 28, highway: 34 }, seating: 5, features: ['Apple CarPlay', 'AWD', 'sunroof', 'adaptive cruise control'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E0F2F7/0288D1?text=Honda+CR-V' },
-            { id: 'car2', make: 'Toyota', model: 'Camry', price: 28000, mpg: { city: 29, highway: 38 }, seating: 5, features: ['Android Auto', 'FWD', 'blind spot monitor'], safetyRating: 5, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/E8F5E9/388E3C?text=Toyota+Camry' },
-            { id: 'car3', make: 'Tesla', 'model': 'Model 3', price: 45000, mpg: { city: 132, highway: 121 }, seating: 5, features: ['Autopilot', 'AWD', 'panoramic glass roof', 'fast charging'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/F3E5F5/7B1FA2?text=Tesla+Model+3' },
-            { id: 'car4', make: 'Subaru', model: 'Forester', price: 32000, mpg: { city: 26, highway: 33 }, seating: 5, features: ['Apple CarPlay', 'AWD', 'EyeSight safety suite'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/FFF3E0/F57C00?text=Subaru+Forester' },
-            { id: 'car5', make: 'Ford', model: 'F-150', price: 40000, mpg: { city: 20, highway: 26 }, seating: 6, features: ['Towing Package', '4x4', 'large bed'], safetyRating: 4, type: 'Truck', imageUrl: 'https://placehold.co/400x250/E0F7FA/00BCD4?text=Ford+F-150' },
-            { id: 'car6', make: 'BMW', model: 'X5', price: 60000, mpg: { city: 21, highway: 26 }, seating: 5, features: ['Leather Seats', 'Panoramic Sunroof', 'Heated Seats', 'Navigation'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/FBE9E7/D84315?text=BMW+X5' },
-            { id: 'car7', make: 'Nissan', model: 'Leaf', price: 30000, mpg: { city: 111, highway: 94 }, seating: 5, features: ['ProPILOT Assist', 'Fast Charging', 'Heated Seats'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/EDE7F6/5E35B1?text=Nissan+Leaf' },
-            { id: 'car8', make: 'Mercedes-Benz', model: 'C-Class', price: 43000, mpg: { city: 23, highway: 35 }, seating: 5, features: ['Burmester Sound System', 'Leather Seats', 'Panoramic Sunroof'], safetyRating: 5, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/E0F2F1/00897B?text=Mercedes+C-Class' },
-            { id: 'car9', make: 'Jeep', model: 'Wrangler', price: 35000, mpg: { city: 17, highway: 23 }, seating: 4, features: ['4x4', 'Removable Top', 'Off-road Tires'], safetyRating: 4, type: 'SUV', imageUrl: 'https://placehold.co/400x250/FFFDE7/FF8F00?text=Jeep+Wrangler' },
-            { id: 'car10', make: 'Hyundai', model: 'Elantra', price: 22000, mpg: { city: 31, highway: 41 }, seating: 5, features: ['Apple CarPlay', 'Android Auto', 'Lane Keeping Assist'], safetyRating: 4, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/FCE4EC/AD1457?text=Hyundai+Elantra' },
-            { id: 'car11', make: 'Audi', model: 'Q7', price: 65000, mpg: { city: 19, highway: 25 }, seating: 7, features: ['Quattro AWD', 'Virtual Cockpit', 'Premium Audio', 'Heated Seats'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/FFF8E1/FFA000?text=Audi+Q7' },
+            { id: 'car2', make: 'Honda', model: 'Accord', price: 26000, mpg: { city: 32, highway: 42 }, seating: 5, features: ['Apple CarPlay', 'Honda Sensing', 'sunroof'], safetyRating: 5, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/E0F2F7/0288D1?text=Honda+Accord' },
+            { id: 'car3', make: 'Honda', model: 'Pilot', price: 38000, mpg: { city: 20, highway: 27 }, seating: 8, features: ['Apple CarPlay', 'AWD', '3rd row seating', 'wireless charging'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E0F2F7/0288D1?text=Honda+Pilot' },
+            
+            // Toyota Group
+            { id: 'car4', make: 'Toyota', model: 'Camry', price: 28000, mpg: { city: 29, highway: 38 }, seating: 5, features: ['Android Auto', 'FWD', 'blind spot monitor'], safetyRating: 5, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/E8F5E9/388E3C?text=Toyota+Camry' },
+            { id: 'car5', make: 'Toyota', model: 'RAV4', price: 32000, mpg: { city: 27, highway: 35 }, seating: 5, features: ['Apple CarPlay', 'AWD', 'Toyota Safety Sense'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E8F5E9/388E3C?text=Toyota+RAV4' },
+            { id: 'car6', make: 'Toyota', model: 'Highlander', price: 40000, mpg: { city: 21, highway: 29 }, seating: 8, features: ['Apple CarPlay', 'AWD', '3rd row seating', 'JBL audio'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E8F5E9/388E3C?text=Toyota+Highlander' },
+            
+            // Ford Group
+            { id: 'car7', make: 'Ford', model: 'F-150', price: 40000, mpg: { city: 20, highway: 26 }, seating: 6, features: ['Towing Package', '4x4', 'large bed'], safetyRating: 4, type: 'Truck', imageUrl: 'https://placehold.co/400x250/E0F7FA/00BCD4?text=Ford+F-150' },
+            { id: 'car8', make: 'Ford', model: 'Explorer', price: 36000, mpg: { city: 21, highway: 28 }, seating: 7, features: ['Apple CarPlay', 'AWD', '3rd row seating', 'SYNC 4'], safetyRating: 4, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E0F7FA/00BCD4?text=Ford+Explorer' },
+            { id: 'car9', make: 'Ford', model: 'Mustang Mach-E', price: 48000, mpg: { city: 105, highway: 93 }, seating: 5, features: ['Fast Charging', 'AWD', 'panoramic glass roof', 'SYNC 4A'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/E0F7FA/00BCD4?text=Ford+Mustang+Mach-E' },
+            
+            // Tesla Group
+            { id: 'car10', make: 'Tesla', model: 'Model 3', price: 45000, mpg: { city: 132, highway: 121 }, seating: 5, features: ['Autopilot', 'AWD', 'panoramic glass roof', 'fast charging'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/F3E5F5/7B1FA2?text=Tesla+Model+3' },
+            { id: 'car11', make: 'Tesla', model: 'Model Y', price: 52000, mpg: { city: 125, highway: 115 }, seating: 7, features: ['Autopilot', 'AWD', 'panoramic glass roof', 'fast charging', '3rd row seating'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/F3E5F5/7B1FA2?text=Tesla+Model+Y' },
+            
+            // Chevrolet Group
             { id: 'car12', make: 'Chevrolet', model: 'Bolt EV', price: 27000, mpg: { city: 120, highway: 100 }, seating: 5, features: ['Fast Charging', 'Apple CarPlay', 'Backup Camera'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/E1F5FE/0277BD?text=Chevrolet+Bolt+EV' },
-            { id: 'car13', make: 'Mazda', model: 'CX-5', price: 29000, mpg: { city: 25, highway: 31 }, seating: 5, features: ['Apple CarPlay', 'AWD', 'Blind Spot Monitoring'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/F1F8E9/689F38?text=Mazda+CX-5' },
-            { id: 'car14', make: 'Lexus', model: 'ES', price: 46000, mpg: { city: 43, highway: 44 }, seating: 5, features: ['Hybrid Engine', 'Leather Seats', 'Mark Levinson Audio'], safetyRating: 5, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/F3E5F5/8E24AA?text=Lexus+ES' },
-            { id: 'car15', make: 'Ram', model: '1500', price: 42000, mpg: { city: 19, highway: 24 }, seating: 6, features: ['Towing Package', '4x4', 'Crew Cab', 'Uconnect'], safetyRating: 4, type: 'Truck', imageUrl: 'https://placehold.co/400x250/EFEBE9/5D4037?text=Ram+1500' },
-            { id: 'car16', make: 'Volkswagen', model: 'Jetta', price: 24000, mpg: { city: 30, highway: 40 }, seating: 5, features: ['Turbocharged Engine', 'Apple CarPlay', 'Forward Collision Warning'], safetyRating: 4, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/E8EAF6/3F51B5?text=Volkswagen+Jetta' },
+            { id: 'car13', make: 'Chevrolet', model: 'Tahoe', price: 52000, mpg: { city: 16, highway: 20 }, seating: 9, features: ['Towing Package', '4x4', '3rd row seating', 'Bose audio'], safetyRating: 4, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E1F5FE/0277BD?text=Chevrolet+Tahoe' },
+            
+            // BMW Group
+            { id: 'car14', make: 'BMW', model: 'X5', price: 60000, mpg: { city: 21, highway: 26 }, seating: 5, features: ['Leather Seats', 'Panoramic Sunroof', 'Heated Seats', 'Navigation'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/FBE9E7/D84315?text=BMW+X5' },
+            { id: 'car15', make: 'BMW', model: '3 Series', price: 41000, mpg: { city: 26, highway: 36 }, seating: 5, features: ['Leather Seats', 'Heated Seats', 'Navigation', 'Harman Kardon audio'], safetyRating: 5, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/FBE9E7/D84315?text=BMW+3+Series' },
+            
+            // Hyundai Group
+            { id: 'car16', make: 'Hyundai', model: 'Elantra', price: 22000, mpg: { city: 31, highway: 41 }, seating: 5, features: ['Apple CarPlay', 'Android Auto', 'Lane Keeping Assist'], safetyRating: 4, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/FCE4EC/AD1457?text=Hyundai+Elantra' },
         ];
 
         // --- User Preferences (will be updated by chat) ---
@@ -445,12 +467,15 @@
                     }
                 }
 
-                const isPerfectMatch = unmatchedCriteria.length === 0 && Object.keys(userPreferences).length > 0; // Perfect match only if some preferences exist and all are met
+                const hasPreferences = Object.keys(userPreferences).length > 0;
+                const isPerfectMatch = hasPreferences && unmatchedCriteria.length === 0; // Perfect match only if some preferences exist and all are met
+                const isPartialMatch = hasPreferences && unmatchedCriteria.length > 0; // Partial match if preferences exist but some don't match
 
                 return {
                     ...car,
                     score,
                     isPerfectMatch,
+                    isPartialMatch,
                     matchedCriteria,
                     unmatchedCriteria
                 };
@@ -490,13 +515,11 @@
                 carEl.classList.add('car-item', 'p-4', 'flex', 'flex-col', 'items-center', 'text-center');
                 carEl.dataset.carId = car.id;
 
-                // Add active/inactive classes
+                // Only add 'active' if perfect match, 'inactive' if partial match (has preferences but doesn't match all)
                 if (car.isPerfectMatch) {
                     carEl.classList.add('active');
-                    carEl.classList.remove('inactive');
-                } else {
+                } else if (car.isPartialMatch) {
                     carEl.classList.add('inactive');
-                    carEl.classList.remove('active');
                 }
 
                 // Conditionally render tooltip based on userPreferences
@@ -510,13 +533,17 @@
                     </div>
                 ` : '';
 
-                carEl.innerHTML = `
-                    <img src="${car.imageUrl}" alt="${car.make} ${car.model}" class="w-full h-32 object-cover rounded-lg mb-3">
-                    <h3 class="text-lg font-semibold text-gray-900">${car.make} ${car.model}</h3>
-                    <p class="text-gray-700 text-sm">$${car.price.toLocaleString()}</p>
-                    <p class="text-gray-600 text-xs">${car.mpg.highway} HWY MPG | ${car.seating} Seats | ${car.type}</p>
+                // Group non-tooltip content for opacity
+                const contentHtml = `
+                    <div class="car-content">
+                        <img src="${car.imageUrl}" alt="${car.make} ${car.model}" class="w-full h-32 object-cover rounded-lg mb-3">
+                        <h3 class="text-lg font-semibold text-gray-900">${car.make} ${car.model}</h3>
+                        <p class="text-gray-700 text-sm">$${car.price.toLocaleString()}</p>
+                        <p class="text-gray-600 text-xs">${car.mpg.highway} HWY MPG | ${car.seating} Seats | ${car.type}</p>
+                    </div>
                     ${tooltipHtml}
                 `;
+                carEl.innerHTML = contentHtml;
                 carListContainer.appendChild(carEl);
             });
 
