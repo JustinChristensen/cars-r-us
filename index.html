@@ -13,7 +13,6 @@
             font-family: 'Inter', sans-serif;
             background-color: #f0f4f8;
             color: #334155;
-            /* Removed overflow: hidden to allow vertical scrolling */
         }
         .car-item {
             background-color: #ffffff;
@@ -34,15 +33,56 @@
 
         /* Active (perfect match) styling */
         .car-item.active {
-            border-color: #2563eb; /* More vibrant blue */
-            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
-            background-color: #dbeafe; /* Lighter blue background */
+            border-color: #f59e0b; /* More vibrant orange */
+            box-shadow: 0 8px 16px rgba(245, 158, 11, 0.25);
+            background-color: #fef3c7; /* Bright orange background */
+        }
+
+        /* Special styling for the ONLY perfect match */
+        .car-item.active.only-perfect-match {
+            transform: scale(1.05);
+            border-width: 3px;
+            border-color: #dc2626; /* Red border for ultimate emphasis */
+            box-shadow: 0 12px 24px rgba(220, 38, 38, 0.3), 0 0 0 4px rgba(220, 38, 38, 0.1);
+            background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 50%, #fef3c7 100%);
+            animation: perfectMatchPulse 2s ease-in-out infinite;
+            z-index: 20;
+            position: relative;
+        }
+
+        .car-item.active.only-perfect-match::before {
+            content: "🎯 PERFECT MATCH!";
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+            z-index: 21;
+        }
+
+        @keyframes perfectMatchPulse {
+            0%, 100% {
+                transform: scale(1.05);
+                box-shadow: 0 12px 24px rgba(220, 38, 38, 0.3), 0 0 0 4px rgba(220, 38, 38, 0.1);
+            }
+            50% {
+                transform: scale(1.08);
+                box-shadow: 0 16px 32px rgba(220, 38, 38, 0.4), 0 0 0 6px rgba(220, 38, 38, 0.2);
+            }
         }
 
         /* Partial match styling - medium opacity */
         .car-item.partial {
-            border-color: #f59e0b; /* Orange border for partial matches */
-            background-color: #fef3c7; /* Light orange background */
+            border-color: #2563eb; /* Blue border for partial matches */
+            background-color: #dbeafe; /* Light blue background */
         }
         .car-item.partial .car-content {
             opacity: 0.75; /* Medium opacity */
@@ -59,19 +99,47 @@
             color: #94a3b8; /* Most muted text color */
         }
 
-        .chat-window {
+        .chat-window, .facet-sidebar {
             background-color: #ffffff;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            /* Added transition for smooth width change */
-            transition: width 0.5s ease-in-out, padding 0.5s ease-in-out; /* Transition padding too */
+            transition: width 0.5s ease-in-out, padding 0.5s ease-in-out;
             flex-shrink: 0;
-            overflow: hidden; /* Re-added overflow: hidden; */
+            overflow: hidden;
             height: 100%; /* Ensure it takes full vertical height */
         }
 
+        /* Specific styling for the left facet sidebar */
+        .facet-sidebar {
+            background-color: #334155; /* Darker background */
+            color: #e2e8f0; /* Lighter text */
+            padding: 1rem;
+            margin-right: 1rem; /* Space between sidebar and car list */
+            width: 20%; /* Adjusted width for the sidebar */
+            max-height: calc(100vh - 96px); /* Full remaining height after header and padding */
+            overflow-y: auto; /* Enable scrolling for facets */
+        }
+
+        .facet-sidebar label, .facet-sidebar h3 {
+            color: #f8fafc; /* Even lighter text for labels/headers */
+        }
+
+        .facet-sidebar select, .facet-sidebar input[type="range"], .facet-sidebar input[type="number"], .facet-sidebar input[type="checkbox"] {
+            background-color: #475569; /* Darker input background */
+            border-color: #64748b; /* Darker border */
+            color: #f8fafc; /* Lighter text */
+            border-radius: 6px;
+        }
+
+        .facet-sidebar input[type="range"]::-webkit-slider-thumb {
+            background-color: #2563eb;
+        }
+        .facet-sidebar input[type="range"]::-moz-range-thumb {
+            background-color: #2563eb;
+        }
+
         .chat-drawer-open {
-            width: 33.333333%; /* Equivalent to w-1/3 */
+            width: 25%; /* Adjusted for three-column layout */
             padding: 1rem; /* p-4 */
         }
 
@@ -164,32 +232,95 @@
         <h1 class="text-4xl font-extrabold text-gray-900 text-left ml-4">Cars R'Us</h1>
     </div>
 
-    <div class="flex w-full flex-grow items-start px-4 pb-4 relative"> <!-- Reverted items-stretch to items-start -->
-        <!-- Car List (Left Content Area) - Dynamically sized -->
-        <div id="car-list-container-wrapper" class="flex flex-col px-4 pb-4 w-2/3">
-            <div id="car-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto h-full"> <!-- Re-added overflow-y-auto -->
+    <div class="flex w-full flex-grow items-start px-4 pb-4 relative">
+        <!-- Left Facet Sidebar -->
+        <div id="facet-sidebar" class="facet-sidebar flex flex-col rounded-xl">
+            <!-- Removed "Filter Cars" header as requested -->
+            <h2 class="text-2xl font-bold mb-4 text-center sr-only">Filter Cars</h2>
+
+            <!-- Brand Filter -->
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Brand</h3>
+                <select id="facet-brand" class="w-full p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Brands</option>
+                    <!-- Options will be dynamically populated -->
+                </select>
+            </div>
+
+            <!-- Car Type Filter -->
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Car Type</h3>
+                <div id="facet-car-type" class="flex flex-col space-y-2">
+                    <!-- Checkboxes will be dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Price Filter -->
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Max Price</h3>
+                <input type="range" id="facet-price-range" min="10000" max="100000" step="1000" value="100000" class="w-full">
+                <p class="text-sm text-right mt-1"><span id="facet-price-value">$100,000</span> or less</p>
+            </div>
+
+            <!-- MPG Filter -->
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Min Highway MPG</h3>
+                <input type="range" id="facet-mpg-range" min="10" max="60" step="1" value="10" class="w-full">
+                <p class="text-sm text-right mt-1"><span id="facet-mpg-value">10</span> MPG or more</p>
+            </div>
+
+            <!-- Seating Capacity Filter -->
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Min Seating</h3>
+                <select id="facet-seating" class="w-full p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Any</option>
+                    <option value="2">2+</option>
+                    <option value="4">4+</option>
+                    <option value="5">5+</option>
+                    <option value="6">6+</option>
+                    <option value="7">7+</option>
+                    <option value="8">8+</option>
+                    <option value="9">9+</option>
+                </select>
+            </div>
+
+            <!-- Features Filter -->
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Features</h3>
+                <div id="facet-features" class="flex flex-col space-y-2">
+                    <!-- Checkboxes will be dynamically populated -->
+                </div>
+            </div>
+
+            <button id="facet-reset-button" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 mt-4">
+                Reset Filters
+            </button>
+        </div>
+
+        <!-- Car List (Middle Content Area) - Dynamically sized -->
+        <div id="car-list-container-wrapper" class="flex flex-col px-4 pb-4 w-3/5 mr-4">
+            <div id="car-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto h-full">
                 <!-- Car items will be rendered here -->
             </div>
         </div>
-
-        <!-- Drawer Toggle Button - Positioned outside chat window -->
-        <button id="drawer-toggle" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 z-20 bg-white shadow-sm">
-            <!-- Hamburger/Close Icon - using SVG for simplicity -->
-            <svg id="toggle-icon-open" class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-            <svg id="toggle-icon-closed" class="w-6 h-6 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-        </button>
 
         <!-- Chat Window (Right Sidebar) - Collapsible drawer -->
         <div id="chat-drawer" class="flex flex-col chat-window chat-drawer-open">
             <div id="chat-drawer-header" class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold text-gray-800 flex-grow text-left">AI Car Assistant</h2>
+                <!-- Drawer Toggle Button - Positioned inside chat window header -->
+                <button id="drawer-toggle" class="p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 z-20 bg-white shadow-sm">
+                    <!-- Hamburger/Close Icon - using SVG for simplicity -->
+                    <svg id="toggle-icon-open" class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    <svg id="toggle-icon-closed" class="w-6 h-6 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
             </div>
             <div id="chat-content" class="flex-grow flex flex-col">
-                <div id="chat-messages" class="flex-grow overflow-y-auto mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50"> <!-- Re-added overflow-y-auto -->
+                <div id="chat-messages" class="flex-grow overflow-y-auto mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
                     <!-- Chat messages will be appended here -->
                     <div class="chat-message ai p-3 my-2 max-w-[80%]">
                         Hi there! I can help you find your perfect car. Tell me what you're looking for!
@@ -241,8 +372,15 @@
             { id: 'car16', make: 'Hyundai', model: 'Elantra', price: 22000, mpg: { city: 31, highway: 41 }, seating: 5, features: ['Apple CarPlay', 'Android Auto', 'Lane Keeping Assist'], safetyRating: 4, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/FCE4EC/AD1457?text=Hyundai+Elantra' },
         ];
 
-        // --- User Preferences (will be updated by chat) ---
-        let userPreferences = {};
+        // --- User Preferences (will be updated by chat and facets) ---
+        let userPreferences = {
+            brand: null,
+            maxPrice: null,
+            minMPGHighway: null,
+            seatingCapacity: null,
+            carType: null, // Can be a string like 'SUV' or an array if multiple types are allowed
+            features: null
+        };
 
         // --- DOM Elements ---
         const chatMessagesDiv = document.getElementById('chat-messages');
@@ -255,7 +393,18 @@
         const toggleIconOpen = document.getElementById('toggle-icon-open');
         const toggleIconClosed = document.getElementById('toggle-icon-closed');
         const chatContent = document.getElementById('chat-content');
-        const chatDrawerHeader = document.getElementById('chat-drawer-header'); // New reference for header
+        const chatDrawerHeader = document.getElementById('chat-drawer-header');
+
+        // Facet DOM Elements
+        const facetBrandSelect = document.getElementById('facet-brand');
+        const facetCarTypeDiv = document.getElementById('facet-car-type');
+        const facetPriceRange = document.getElementById('facet-price-range');
+        const facetPriceValueSpan = document.getElementById('facet-price-value');
+        const facetMpgRange = document.getElementById('facet-mpg-range');
+        const facetMpgValueSpan = document.getElementById('facet-mpg-value');
+        const facetSeatingSelect = document.getElementById('facet-seating');
+        const facetFeaturesDiv = document.getElementById('facet-features');
+        const facetResetButton = document.getElementById('facet-reset-button');
 
         let isDrawerOpen = true; // Initial state: drawer is open
 
@@ -306,7 +455,6 @@
                 }
             }
             if (foundBrand) {
-                // Normalize Mercedes-Benz
                 let displayBrand = foundBrand === "mercedes" ? "Mercedes-Benz" : foundBrand.charAt(0).toUpperCase() + foundBrand.slice(1);
                 userPreferences.brand = { value: displayBrand, weight: 2, description: `brand preference: ${displayBrand}` };
                 aiResponse = `Focusing on cars from ${displayBrand}.`;
@@ -388,7 +536,7 @@
                     preferenceUpdated = true;
                 }
             } else if (lowerInput.includes("reset") || lowerInput.includes("clear preferences")) {
-                userPreferences = {};
+                resetPreferences(); // Call the new reset function
                 aiResponse = "Okay, I've cleared all your preferences. What would you like to start with?";
                 preferenceUpdated = true;
             }
@@ -396,6 +544,7 @@
             addChatMessage(aiResponse, 'ai');
 
             if (preferenceUpdated) {
+                updateFacetUI(); // Update facets after AI changes preferences
                 updateCarDisplay(); // Re-rank and re-render if preferences changed
             }
         }
@@ -408,13 +557,9 @@
                 const unmatchedCriteria = [];
 
                 // --- Evaluate Brand ---
-                if (userPreferences.brand) {
-                    // Normalize Mercedes-Benz
+                if (userPreferences.brand && userPreferences.brand.value) {
                     let carBrand = car.make;
-                    if (carBrand.toLowerCase() === "mercedes-benz" && userPreferences.brand.value === "Mercedes-Benz") {
-                        score += userPreferences.brand.weight;
-                        matchedCriteria.push(`Matches brand preference: Mercedes-Benz.`);
-                    } else if (carBrand.toLowerCase() === userPreferences.brand.value.toLowerCase()) {
+                    if (carBrand.toLowerCase() === userPreferences.brand.value.toLowerCase()) {
                         score += userPreferences.brand.weight;
                         matchedCriteria.push(`Matches brand preference: ${carBrand}.`);
                     } else {
@@ -422,7 +567,7 @@
                     }
                 }
                 // --- Evaluate MPG ---
-                if (userPreferences.minMPGHighway) {
+                if (userPreferences.minMPGHighway && userPreferences.minMPGHighway.value > 0) {
                     if (car.mpg.highway >= userPreferences.minMPGHighway.value) {
                         score += userPreferences.minMPGHighway.weight;
                         matchedCriteria.push(`Meets highway MPG preference (${car.mpg.highway} MPG vs. desired ${userPreferences.minMPGHighway.value}+ MPG).`);
@@ -432,7 +577,7 @@
                 }
 
                 // --- Evaluate Price ---
-                if (userPreferences.maxPrice) {
+                if (userPreferences.maxPrice && userPreferences.maxPrice.value < 100000) { // Assuming 100k is max for "no preference"
                     if (car.price <= userPreferences.maxPrice.value) {
                         score += userPreferences.maxPrice.weight;
                         matchedCriteria.push(`Meets price preference ($${car.price.toLocaleString()} vs. desired $${userPreferences.maxPrice.value.toLocaleString()} or less).`);
@@ -466,7 +611,7 @@
                 }
 
                 // --- Evaluate Seating Capacity ---
-                if (userPreferences.seatingCapacity) {
+                if (userPreferences.seatingCapacity && userPreferences.seatingCapacity.value > 0) {
                     if (car.seating >= userPreferences.seatingCapacity.value) {
                         score += userPreferences.seatingCapacity.weight;
                         matchedCriteria.push(`Meets seating capacity preference (${car.seating} seats vs. desired ${userPreferences.seatingCapacity.value}+ seats).`);
@@ -476,7 +621,7 @@
                 }
 
                 // --- Evaluate Car Type ---
-                if (userPreferences.carType) {
+                if (userPreferences.carType && userPreferences.carType.value) {
                     if (car.type === userPreferences.carType.value) {
                         score += userPreferences.carType.weight;
                         matchedCriteria.push(`Matches desired car type: ${car.type}.`);
@@ -485,7 +630,7 @@
                     }
                 }
 
-                const hasPreferences = Object.keys(userPreferences).length > 0;
+                const hasPreferences = Object.values(userPreferences).some(pref => pref !== null && (pref.value !== '' && pref.value !== 0 && (Array.isArray(pref.value) ? pref.value.length > 0 : true)));
                 const isPerfectMatch = hasPreferences && unmatchedCriteria.length === 0; // Perfect match only if some preferences exist and all are met
                 const isPartialMatch = hasPreferences && unmatchedCriteria.length > 0 && matchedCriteria.length > 0; // Partial match if preferences exist and some match but not all
                 const isNoMatch = hasPreferences && matchedCriteria.length === 0; // No match if preferences exist but none match
@@ -535,9 +680,16 @@
                 carEl.classList.add('car-item', 'p-4', 'flex', 'flex-col', 'items-center', 'text-center');
                 carEl.dataset.carId = car.id;
 
+                // Count perfect matches to determine if this is the only one
+                const perfectMatchCount = newlyRankedCars.filter(c => c.isPerfectMatch).length;
+
                 // Apply styling based on match level: perfect (active), partial, or no match (inactive)
                 if (car.isPerfectMatch) {
                     carEl.classList.add('active');
+                    // Add special styling if this is the ONLY perfect match
+                    if (perfectMatchCount === 1) {
+                        carEl.classList.add('only-perfect-match');
+                    }
                 } else if (car.isPartialMatch) {
                     carEl.classList.add('partial');
                 } else if (car.isNoMatch) {
@@ -545,7 +697,9 @@
                 }
 
                 // Conditionally render tooltip based on userPreferences
-                const tooltipHtml = Object.keys(userPreferences).length > 0 ? `
+                const hasPreferences = Object.values(userPreferences).some(pref => pref !== null && (pref.value !== '' && pref.value !== 0 && (Array.isArray(pref.value) ? pref.value.length > 0 : true)));
+
+                const tooltipHtml = hasPreferences ? `
                     <div class="tooltip">
                         ${car.isPerfectMatch && car.matchedCriteria.length > 0 ?
                             `<strong>Why this car is right for you:</strong><ul>${car.matchedCriteria.map(c => `<li>${c}</li>`).join('')}</ul>` :
@@ -648,8 +802,8 @@
                 // Close the drawer
                 chatDrawer.classList.remove('chat-drawer-open');
                 chatDrawer.classList.add('chat-drawer-closed');
-                carListContainerWrapper.classList.remove('w-2/3', 'mr-2');
-                carListContainerWrapper.classList.add('w-full');
+                carListContainerWrapper.classList.remove('w-3/5', 'mr-4'); // Adjust for new layout
+                carListContainerWrapper.classList.add('w-4/5'); // Car list takes more space
                 chatContent.classList.add('hidden'); // Hide content immediately
                 chatDrawerHeader.classList.add('hidden'); // Hide header content
                 toggleIconOpen.classList.add('hidden');
@@ -658,8 +812,8 @@
                 // Open the drawer
                 chatDrawer.classList.remove('chat-drawer-closed');
                 chatDrawer.classList.add('chat-drawer-open');
-                carListContainerWrapper.classList.remove('w-full');
-                carListContainerWrapper.classList.add('w-2/3', 'mr-2');
+                carListContainerWrapper.classList.remove('w-4/5'); // Car list shrinks
+                carListContainerWrapper.classList.add('w-3/5', 'mr-4'); // Adjust for new layout
                 chatContent.classList.remove('hidden'); // Show content
                 chatDrawerHeader.classList.remove('hidden'); // Show header content
                 toggleIconOpen.classList.remove('hidden');
@@ -667,6 +821,125 @@
             }
             isDrawerOpen = !isDrawerOpen; // Toggle the state
         }
+
+        // --- Facet Initialization and Update ---
+        function initializeFacets() {
+            // Populate Brand Select
+            const brands = [...new Set(cars.map(car => car.make))].sort();
+            brands.forEach(brand => {
+                const option = document.createElement('option');
+                option.value = brand;
+                option.textContent = brand;
+                facetBrandSelect.appendChild(option);
+            });
+
+            // Populate Car Type Checkboxes
+            const carTypes = [...new Set(cars.map(car => car.type))].sort();
+            carTypes.forEach(type => {
+                const div = document.createElement('div');
+                div.classList.add('flex', 'items-center');
+                div.innerHTML = `
+                    <input type="checkbox" id="car-type-${type.toLowerCase().replace(/\s/g, '-')}" value="${type}" class="form-checkbox h-4 w-4 text-blue-600 rounded">
+                    <label for="car-type-${type.toLowerCase().replace(/\s/g, '-')}" class="ml-2 text-sm">${type}</label>
+                `;
+                facetCarTypeDiv.appendChild(div);
+            });
+
+            // Populate Features Checkboxes (only unique features)
+            const allFeatures = cars.flatMap(car => car.features);
+            const uniqueFeatures = [...new Set(allFeatures)].sort();
+            uniqueFeatures.forEach(feature => {
+                const div = document.createElement('div');
+                div.classList.add('flex', 'items-center');
+                div.innerHTML = `
+                    <input type="checkbox" id="feature-${feature.toLowerCase().replace(/\s/g, '-')}" value="${feature}" class="form-checkbox h-4 w-4 text-blue-600 rounded">
+                    <label for="feature-${feature.toLowerCase().replace(/\s/g, '-')}" class="ml-2 text-sm">${feature}</label>
+                `;
+                facetFeaturesDiv.appendChild(div);
+            });
+
+            // Set initial values for sliders and display them
+            facetPriceRange.value = 100000; // Max price initially
+            facetPriceValueSpan.textContent = `$${parseInt(facetPriceRange.value).toLocaleString()}`;
+            facetMpgRange.value = 10; // Min MPG initially
+            facetMpgValueSpan.textContent = `${parseInt(facetMpgRange.value)}`;
+
+            // Add event listeners for facets
+            facetBrandSelect.addEventListener('change', handleFacetChange);
+            facetCarTypeDiv.addEventListener('change', handleFacetChange);
+            facetPriceRange.addEventListener('input', handleFacetChange); // Use 'input' for continuous update
+            facetMpgRange.addEventListener('input', handleFacetChange);
+            facetSeatingSelect.addEventListener('change', handleFacetChange);
+            facetFeaturesDiv.addEventListener('change', handleFacetChange);
+            facetResetButton.addEventListener('click', resetPreferences);
+
+            // Update display for sliders on input
+            facetPriceRange.addEventListener('input', () => {
+                facetPriceValueSpan.textContent = `$${parseInt(facetPriceRange.value).toLocaleString()}`;
+            });
+            facetMpgRange.addEventListener('input', () => {
+                facetMpgValueSpan.textContent = `${parseInt(facetMpgRange.value)}`;
+            });
+        }
+
+        function handleFacetChange() {
+            // Update userPreferences based on current facet values
+            userPreferences.brand = facetBrandSelect.value ? { value: facetBrandSelect.value, weight: 2, description: `brand preference: ${facetBrandSelect.value}` } : null;
+            userPreferences.maxPrice = parseInt(facetPriceRange.value) < 100000 ? { value: parseInt(facetPriceRange.value), weight: 3, description: `price under $${parseInt(facetPriceRange.value).toLocaleString()}` } : null;
+            userPreferences.minMPGHighway = parseInt(facetMpgRange.value) > 10 ? { value: parseInt(facetMpgRange.value), weight: 2, description: `highway MPG of at least ${parseInt(facetMpgRange.value)}` } : null;
+            userPreferences.seatingCapacity = parseInt(facetSeatingSelect.value) > 0 ? { value: parseInt(facetSeatingSelect.value), weight: 2, description: `at least ${parseInt(facetSeatingSelect.value)} seats` } : null;
+
+            const selectedCarTypes = Array.from(facetCarTypeDiv.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+            userPreferences.carType = selectedCarTypes.length > 0 ? { value: selectedCarTypes[0], weight: 3, description: `car type: ${selectedCarTypes[0]}` } : null; // For simplicity, only take the first selected type if multiple are allowed by UI
+
+            const selectedFeatures = Array.from(facetFeaturesDiv.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+            userPreferences.features = selectedFeatures.length > 0 ? { value: selectedFeatures, weight: 1, description: `specific features: ${selectedFeatures.join(', ')}` } : null;
+
+            updateCarDisplay();
+        }
+
+        function updateFacetUI() {
+            // Update Brand Select
+            facetBrandSelect.value = userPreferences.brand ? userPreferences.brand.value : '';
+
+            // Update Price Slider
+            facetPriceRange.value = userPreferences.maxPrice ? userPreferences.maxPrice.value : 100000;
+            facetPriceValueSpan.textContent = `$${parseInt(facetPriceRange.value).toLocaleString()}`;
+
+            // Update MPG Slider
+            facetMpgRange.value = userPreferences.minMPGHighway ? userPreferences.minMPGHighway.value : 10;
+            facetMpgValueSpan.textContent = `${parseInt(facetMpgRange.value)}`;
+
+            // Update Seating Select
+            facetSeatingSelect.value = userPreferences.seatingCapacity ? userPreferences.seatingCapacity.value : '';
+
+            // Update Car Type Checkboxes
+            const carTypeCheckboxes = facetCarTypeDiv.querySelectorAll('input[type="checkbox"]');
+            carTypeCheckboxes.forEach(cb => {
+                cb.checked = (userPreferences.carType && userPreferences.carType.value === cb.value);
+            });
+
+            // Update Features Checkboxes
+            const featureCheckboxes = facetFeaturesDiv.querySelectorAll('input[type="checkbox"]');
+            featureCheckboxes.forEach(cb => {
+                cb.checked = (userPreferences.features && userPreferences.features.value.includes(cb.value));
+            });
+        }
+
+        function resetPreferences() {
+            userPreferences = {
+                brand: null,
+                maxPrice: null,
+                minMPGHighway: null,
+                seatingCapacity: null,
+                carType: null,
+                features: null
+            };
+            updateFacetUI(); // Reset UI elements
+            updateCarDisplay(); // Re-render cars
+            addChatMessage("All filters have been reset.", "ai");
+        }
+
 
         // --- Event Listeners ---
         sendButton.addEventListener('click', () => {
@@ -685,6 +958,7 @@
 
         // Initial render on page load
         window.onload = () => {
+            initializeFacets(); // Initialize facets first
             updateCarDisplay();
             // Ensure drawer starts open
             if (!isDrawerOpen) {
