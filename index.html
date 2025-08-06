@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Comparison AI</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #334155;
+            /* Removed overflow: hidden to allow vertical scrolling */
+        }
+        .car-item {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out, background-color 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            will-change: transform;
+            z-index: 1;
+        }
+
+        /* Bring hovered item to front */
+        .car-item:hover {
+            z-index: 10;
+        }
+
+        /* Active (perfect match) styling */
+        .car-item.active {
+            border-color: #3b82f6;
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.2);
+            background-color: #eff6ff;
+        }
+
+        /* Inactive (partial/no match) styling */
+        .car-item.inactive {
+            border-color: #cbd5e1;
+            background-color: #f8fafc;
+            opacity: 0.7;
+        }
+
+        .chat-window {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            /* Added transition for smooth width change */
+            transition: width 0.5s ease-in-out, padding 0.5s ease-in-out; /* Transition padding too */
+            flex-shrink: 0;
+            overflow: hidden; /* Re-added overflow: hidden; */
+            height: 100%; /* Ensure it takes full vertical height */
+        }
+
+        .chat-drawer-open {
+            width: 33.333333%; /* Equivalent to w-1/3 */
+            padding: 1rem; /* p-4 */
+        }
+
+        .chat-drawer-closed {
+            width: 0; /* Truly collapsed */
+            padding: 0; /* Remove padding when collapsed */
+            margin: 0; /* Remove margin when collapsed */
+            border: 0; /* Remove border when collapsed */
+        }
+
+        .chat-message.user {
+            background-color: #dbeafe;
+            border-radius: 12px 12px 2px 12px;
+            align-self: flex-end;
+        }
+
+        .chat-message.ai {
+            background-color: #e2e8f0;
+            border-radius: 12px 12px 12px 2px;
+            align-self: flex-start;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            white-space: normal;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+            max-width: 400px;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 100%;
+            bottom: auto;
+            margin-top: 10px;
+        }
+
+        .car-item:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Loading indicator for chat */
+        .loading-dots span {
+            animation: blink 1.4s infinite both;
+        }
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes blink {
+            0% { opacity: 0.2; }
+            20% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+
+        /* Car list transition for smooth resizing */
+        #car-list-container-wrapper {
+            transition: width 0.5s ease-in-out, margin-right 0.5s ease-in-out;
+            height: auto;
+        }
+
+        #car-list-container {
+            overflow-y: auto;
+            max-height: calc(100vh - 120px); /* Adjust for header and padding */
+        }
+
+        #chat-drawer {
+            height: calc(100vh - 96px); /* Full remaining height after header and padding */
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen pt-0 items-center">
+    <!-- Global Header -->
+    <div class="w-full bg-white p-4 shadow-md mb-4">
+        <h1 class="text-4xl font-extrabold text-gray-900 text-left ml-4">Cars R'Us</h1>
+    </div>
+
+    <div class="flex w-full flex-grow items-start px-4 pb-4 relative"> <!-- Reverted items-stretch to items-start -->
+        <!-- Car List (Left Content Area) - Dynamically sized -->
+        <div id="car-list-container-wrapper" class="flex flex-col px-4 pb-4 w-2/3">
+            <div id="car-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto h-full"> <!-- Re-added overflow-y-auto -->
+                <!-- Car items will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Drawer Toggle Button - Positioned outside chat window -->
+        <button id="drawer-toggle" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 z-20 bg-white shadow-sm">
+            <!-- Hamburger/Close Icon - using SVG for simplicity -->
+            <svg id="toggle-icon-open" class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <svg id="toggle-icon-closed" class="w-6 h-6 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+
+        <!-- Chat Window (Right Sidebar) - Collapsible drawer -->
+        <div id="chat-drawer" class="flex flex-col chat-window chat-drawer-open">
+            <div id="chat-drawer-header" class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800 flex-grow text-center">AI Car Assistant</h2>
+            </div>
+            <div id="chat-content" class="flex-grow flex flex-col">
+                <div id="chat-messages" class="flex-grow overflow-y-auto mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50"> <!-- Re-added overflow-y-auto -->
+                    <!-- Chat messages will be appended here -->
+                    <div class="chat-message ai p-3 my-2 max-w-[80%]">
+                        Hi there! I can help you find your perfect car. Tell me what you're looking for!
+                    </div>
+                </div>
+                <div class="flex w-full">
+                    <input type="text" id="user-input" placeholder="Type your preferences..."
+                           class="flex-grow p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0">
+                    <button id="send-button"
+                            class="bg-blue-600 text-white px-6 py-3 rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-500">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Car Data ---
+        const cars = [
+            { id: 'car1', make: 'Honda', model: 'CR-V', price: 30000, mpg: { city: 28, highway: 34 }, seating: 5, features: ['Apple CarPlay', 'AWD', 'sunroof', 'adaptive cruise control'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/E0F2F7/0288D1?text=Honda+CR-V' },
+            { id: 'car2', make: 'Toyota', model: 'Camry', price: 28000, mpg: { city: 29, highway: 38 }, seating: 5, features: ['Android Auto', 'FWD', 'blind spot monitor'], safetyRating: 5, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/E8F5E9/388E3C?text=Toyota+Camry' },
+            { id: 'car3', make: 'Tesla', 'model': 'Model 3', price: 45000, mpg: { city: 132, highway: 121 }, seating: 5, features: ['Autopilot', 'AWD', 'panoramic glass roof', 'fast charging'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/F3E5F5/7B1FA2?text=Tesla+Model+3' },
+            { id: 'car4', make: 'Subaru', model: 'Forester', price: 32000, mpg: { city: 26, highway: 33 }, seating: 5, features: ['Apple CarPlay', 'AWD', 'EyeSight safety suite'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/FFF3E0/F57C00?text=Subaru+Forester' },
+            { id: 'car5', make: 'Ford', model: 'F-150', price: 40000, mpg: { city: 20, highway: 26 }, seating: 6, features: ['Towing Package', '4x4', 'large bed'], safetyRating: 4, type: 'Truck', imageUrl: 'https://placehold.co/400x250/E0F7FA/00BCD4?text=Ford+F-150' },
+            { id: 'car6', make: 'BMW', model: 'X5', price: 60000, mpg: { city: 21, highway: 26 }, seating: 5, features: ['Leather Seats', 'Panoramic Sunroof', 'Heated Seats', 'Navigation'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/FBE9E7/D84315?text=BMW+X5' },
+            { id: 'car7', make: 'Nissan', model: 'Leaf', price: 30000, mpg: { city: 111, highway: 94 }, seating: 5, features: ['ProPILOT Assist', 'Fast Charging', 'Heated Seats'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/EDE7F6/5E35B1?text=Nissan+Leaf' },
+            { id: 'car8', make: 'Mercedes-Benz', model: 'C-Class', price: 43000, mpg: { city: 23, highway: 35 }, seating: 5, features: ['Burmester Sound System', 'Leather Seats', 'Panoramic Sunroof'], safetyRating: 5, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/E0F2F1/00897B?text=Mercedes+C-Class' },
+            { id: 'car9', make: 'Jeep', model: 'Wrangler', price: 35000, mpg: { city: 17, highway: 23 }, seating: 4, features: ['4x4', 'Removable Top', 'Off-road Tires'], safetyRating: 4, type: 'SUV', imageUrl: 'https://placehold.co/400x250/FFFDE7/FF8F00?text=Jeep+Wrangler' },
+            { id: 'car10', make: 'Hyundai', model: 'Elantra', price: 22000, mpg: { city: 31, highway: 41 }, seating: 5, features: ['Apple CarPlay', 'Android Auto', 'Lane Keeping Assist'], safetyRating: 4, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/FCE4EC/AD1457?text=Hyundai+Elantra' },
+            { id: 'car11', make: 'Audi', model: 'Q7', price: 65000, mpg: { city: 19, highway: 25 }, seating: 7, features: ['Quattro AWD', 'Virtual Cockpit', 'Premium Audio', 'Heated Seats'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/FFF8E1/FFA000?text=Audi+Q7' },
+            { id: 'car12', make: 'Chevrolet', model: 'Bolt EV', price: 27000, mpg: { city: 120, highway: 100 }, seating: 5, features: ['Fast Charging', 'Apple CarPlay', 'Backup Camera'], safetyRating: 5, type: 'EV', imageUrl: 'https://placehold.co/400x250/E1F5FE/0277BD?text=Chevrolet+Bolt+EV' },
+            { id: 'car13', make: 'Mazda', model: 'CX-5', price: 29000, mpg: { city: 25, highway: 31 }, seating: 5, features: ['Apple CarPlay', 'AWD', 'Blind Spot Monitoring'], safetyRating: 5, type: 'SUV', imageUrl: 'https://placehold.co/400x250/F1F8E9/689F38?text=Mazda+CX-5' },
+            { id: 'car14', make: 'Lexus', model: 'ES', price: 46000, mpg: { city: 43, highway: 44 }, seating: 5, features: ['Hybrid Engine', 'Leather Seats', 'Mark Levinson Audio'], safetyRating: 5, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/F3E5F5/8E24AA?text=Lexus+ES' },
+            { id: 'car15', make: 'Ram', model: '1500', price: 42000, mpg: { city: 19, highway: 24 }, seating: 6, features: ['Towing Package', '4x4', 'Crew Cab', 'Uconnect'], safetyRating: 4, type: 'Truck', imageUrl: 'https://placehold.co/400x250/EFEBE9/5D4037?text=Ram+1500' },
+            { id: 'car16', make: 'Volkswagen', model: 'Jetta', price: 24000, mpg: { city: 30, highway: 40 }, seating: 5, features: ['Turbocharged Engine', 'Apple CarPlay', 'Forward Collision Warning'], safetyRating: 4, type: 'Sedan', imageUrl: 'https://placehold.co/400x250/E8EAF6/3F51B5?text=Volkswagen+Jetta' },
+        ];
+
+        // --- User Preferences (will be updated by chat) ---
+        let userPreferences = {};
+
+        // --- DOM Elements ---
+        const chatMessagesDiv = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const carListContainer = document.getElementById('car-list-container');
+        const carListContainerWrapper = document.getElementById('car-list-container-wrapper');
+        const chatDrawer = document.getElementById('chat-drawer');
+        const drawerToggle = document.getElementById('drawer-toggle');
+        const toggleIconOpen = document.getElementById('toggle-icon-open');
+        const toggleIconClosed = document.getElementById('toggle-icon-closed');
+        const chatContent = document.getElementById('chat-content');
+        const chatDrawerHeader = document.getElementById('chat-drawer-header'); // New reference for header
+
+        let isDrawerOpen = true; // Initial state: drawer is open
+
+        // --- Utility Functions ---
+
+        // Function to add a message to the chat window
+        function addChatMessage(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-message', sender, 'p-3', 'my-2', 'max-w-[80%]', 'shadow-sm');
+            messageDiv.textContent = message;
+            chatMessagesDiv.appendChild(messageDiv);
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
+        }
+
+        // Simulates AI processing and updating preferences
+        async function processUserInput(input) {
+            addChatMessage(input, 'user');
+            userInput.value = ''; // Clear input immediately
+
+            // Show a loading indicator
+            const loadingDiv = document.createElement('div');
+            loadingDiv.classList.add('chat-message', 'ai', 'p-3', 'my-2', 'max-w-[80%]', 'shadow-sm', 'loading-dots');
+            loadingDiv.innerHTML = '<span>.</span><span>.</span><span>.</span>';
+            chatMessagesDiv.appendChild(loadingDiv);
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+
+            // Simulate AI thinking time
+            await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+
+            // Remove loading indicator
+            chatMessagesDiv.removeChild(loadingDiv);
+
+            let aiResponse = "I'm not sure how to interpret that. Can you tell me more about what you're looking for?";
+            let preferenceUpdated = false;
+
+            const lowerInput = input.toLowerCase();
+
+            // --- Preference Parsing Logic (simplified for demo) ---
+            // Brand preference
+            const knownBrands = [
+                "honda", "toyota", "tesla", "subaru", "ford", "bmw", "nissan", "mercedes", "mercedes-benz", "jeep", "hyundai", "audi", "chevrolet", "mazda", "lexus", "ram", "volkswagen"
+            ];
+            let foundBrand = null;
+            for (const brand of knownBrands) {
+                if (lowerInput.includes(brand)) {
+                    foundBrand = brand;
+                    break;
+                }
+            }
+            if (foundBrand) {
+                // Normalize Mercedes-Benz
+                let displayBrand = foundBrand === "mercedes" ? "Mercedes-Benz" : foundBrand.charAt(0).toUpperCase() + foundBrand.slice(1);
+                userPreferences.brand = { value: displayBrand, weight: 2, description: `brand preference: ${displayBrand}` };
+                aiResponse = `Focusing on cars from ${displayBrand}.`;
+                preferenceUpdated = true;
+            }
+            else if (lowerInput.includes("gas mileage") || lowerInput.includes("mpg")) {
+                const match = lowerInput.match(/(\d+)\s*(mpg|miles per gallon)/);
+                if (match) {
+                    const mpgValue = parseInt(match[1], 10);
+                    userPreferences.minMPGHighway = { value: mpgValue, weight: 2, description: `highway MPG of at least ${mpgValue}` };
+                    aiResponse = `Okay, I'll prioritize cars with at least ${mpgValue} highway MPG.`;
+                    preferenceUpdated = true;
+                } else {
+                    userPreferences.minMPGHighway = { value: 30, weight: 2, description: "good highway MPG" };
+                    aiResponse = "Got it, looking for good gas mileage. I'll prioritize cars with high highway MPG.";
+                    preferenceUpdated = true;
+                }
+            } else if (lowerInput.includes("price") || lowerInput.includes("budget") || lowerInput.includes("cost")) {
+                const match = lowerInput.match(/under\s*\$*(\d+k|\d+)/);
+                if (match) {
+                    let priceValue = parseInt(match[1].replace('k', '000'), 10);
+                    userPreferences.maxPrice = { value: priceValue, weight: 3, description: `price under $${priceValue.toLocaleString()}` };
+                    aiResponse = `Searching for cars under $${priceValue.toLocaleString()}.`;
+                    preferenceUpdated = true;
+                } else {
+                    userPreferences.maxPrice = { value: 40000, weight: 3, description: "affordable price" };
+                    aiResponse = "Okay, I'll look for cars that are more affordable.";
+                    preferenceUpdated = true;
+                }
+            } else if (lowerInput.includes("awd") || lowerInput.includes("all-wheel drive")) {
+                if (!userPreferences.features) userPreferences.features = { value: [], weight: 1, description: "specific features" };
+                if (!userPreferences.features.value.includes('AWD')) {
+                    userPreferences.features.value.push('AWD');
+                    aiResponse = "Adding 'AWD' to your desired features.";
+                    preferenceUpdated = true;
+                } else {
+                    aiResponse = "You already mentioned AWD!";
+                }
+            } else if (lowerInput.includes("apple carplay")) {
+                if (!userPreferences.features) userPreferences.features = { value: [], weight: 1, description: "specific features" };
+                if (!userPreferences.features.value.includes('Apple CarPlay')) {
+                    userPreferences.features.value.push('Apple CarPlay');
+                    aiResponse = "Adding 'Apple CarPlay' to your desired features.";
+                    preferenceUpdated = true;
+                } else {
+                    aiResponse = "You already mentioned Apple CarPlay!";
+                }
+            } else if (lowerInput.includes("suv")) {
+                userPreferences.carType = { value: 'SUV', weight: 3, description: "an SUV" };
+                aiResponse = "Prioritizing SUVs for you.";
+                preferenceUpdated = true;
+            } else if (lowerInput.includes("sedan")) {
+                userPreferences.carType = { value: 'Sedan', weight: 3, description: "a Sedan" };
+                aiResponse = "Focusing on Sedans for your search.";
+                preferenceUpdated = true;
+            } else if (lowerInput.includes("electric") || lowerInput.includes("ev")) {
+                userPreferences.carType = { value: 'EV', weight: 3, description: "an Electric Vehicle" };
+                aiResponse = "Looking into Electric Vehicles for you.";
+                preferenceUpdated = true;
+            } else if (lowerInput.includes("seats") || lowerInput.includes("seating")) {
+                const match = lowerInput.match(/(\d+)\s*seats?/);
+                if (match) {
+                    const seatingValue = parseInt(match[1], 10);
+                    userPreferences.seatingCapacity = { value: seatingValue, weight: 2, description: `at least ${seatingValue} seats` };
+                    aiResponse = `Okay, prioritizing cars with at least ${seatingValue} seats.`;
+                    preferenceUpdated = true;
+                } else {
+                    userPreferences.seatingCapacity = { value: 5, weight: 2, description: "at least 5 seats." };
+                    aiResponse = "Looking for cars with good seating capacity, at least 5 seats.";
+                    preferenceUpdated = true;
+                }
+            } else if (lowerInput.includes("reset") || lowerInput.includes("clear preferences")) {
+                userPreferences = {};
+                aiResponse = "Okay, I've cleared all your preferences. What would you like to start with?";
+                preferenceUpdated = true;
+            }
+
+            addChatMessage(aiResponse, 'ai');
+
+            if (preferenceUpdated) {
+                updateCarDisplay(); // Re-rank and re-render if preferences changed
+            }
+        }
+
+        // --- Ranking Algorithm ---
+        function rankCars(cars, userPreferences) {
+            const rankedCars = cars.map(car => {
+                let score = 0;
+                const matchedCriteria = [];
+                const unmatchedCriteria = [];
+
+                // --- Evaluate Brand ---
+                if (userPreferences.brand) {
+                    // Normalize Mercedes-Benz
+                    let carBrand = car.make;
+                    if (carBrand.toLowerCase() === "mercedes-benz" && userPreferences.brand.value === "Mercedes-Benz") {
+                        score += userPreferences.brand.weight;
+                        matchedCriteria.push(`Matches brand preference: Mercedes-Benz.`);
+                    } else if (carBrand.toLowerCase() === userPreferences.brand.value.toLowerCase()) {
+                        score += userPreferences.brand.weight;
+                        matchedCriteria.push(`Matches brand preference: ${carBrand}.`);
+                    } else {
+                        unmatchedCriteria.push(`Does not match brand preference (actual: ${carBrand}, desired: ${userPreferences.brand.value}).`);
+                    }
+                }
+                // --- Evaluate MPG ---
+                if (userPreferences.minMPGHighway) {
+                    if (car.mpg.highway >= userPreferences.minMPGHighway.value) {
+                        score += userPreferences.minMPGHighway.weight;
+                        matchedCriteria.push(`Meets highway MPG preference (${car.mpg.highway} MPG vs. desired ${userPreferences.minMPGHighway.value}+ MPG).`);
+                    } else {
+                        unmatchedCriteria.push(`Does not meet highway MPG preference (actual: ${car.mpg.highway} MPG, desired: ${userPreferences.minMPGHighway.value}+ MPG).`);
+                    }
+                }
+
+                // --- Evaluate Price ---
+                if (userPreferences.maxPrice) {
+                    if (car.price <= userPreferences.maxPrice.value) {
+                        score += userPreferences.maxPrice.weight;
+                        matchedCriteria.push(`Meets price preference ($${car.price.toLocaleString()} vs. desired $${userPreferences.maxPrice.value.toLocaleString()} or less).`);
+                    } else {
+                        unmatchedCriteria.push(`Does not meet price preference (actual: $${car.price.toLocaleString()}, desired: $${userPreferences.maxPrice.value.toLocaleString()} or less).`);
+                    }
+                }
+
+                // --- Evaluate Features ---
+                if (userPreferences.features && userPreferences.features.value.length > 0) {
+                    let featuresMatchedCount = 0;
+                    const missingFeatures = [];
+                    userPreferences.features.value.forEach(prefFeature => {
+                        if (car.features.includes(prefFeature)) {
+                            featuresMatchedCount++;
+                        } else {
+                            missingFeatures.push(prefFeature);
+                        }
+                    });
+
+                    if (featuresMatchedCount === userPreferences.features.value.length) {
+                        score += userPreferences.features.weight;
+                        matchedCriteria.push(`Has all desired features: ${userPreferences.features.value.join(', ')}.`);
+                    } else if (featuresMatchedCount > 0) {
+                        score += userPreferences.features.weight * (featuresMatchedCount / userPreferences.features.value.length); // Partial score
+                        matchedCriteria.push(`Has some desired features (${featuresMatchedCount}/${userPreferences.features.value.length} found).`);
+                        unmatchedCriteria.push(`Missing features: ${missingFeatures.join(', ')}.`);
+                    } else {
+                        unmatchedCriteria.push(`Does not have any of the desired features: ${userPreferences.features.value.join(', ')}.`);
+                    }
+                }
+
+                // --- Evaluate Seating Capacity ---
+                if (userPreferences.seatingCapacity) {
+                    if (car.seating >= userPreferences.seatingCapacity.value) {
+                        score += userPreferences.seatingCapacity.weight;
+                        matchedCriteria.push(`Meets seating capacity preference (${car.seating} seats vs. desired ${userPreferences.seatingCapacity.value}+ seats).`);
+                    } else {
+                        unmatchedCriteria.push(`Does not meet seating capacity preference (actual: ${car.seating} seats, desired: ${userPreferences.seatingCapacity.value}+ seats).`);
+                    }
+                }
+
+                // --- Evaluate Car Type ---
+                if (userPreferences.carType) {
+                    if (car.type === userPreferences.carType.value) {
+                        score += userPreferences.carType.weight;
+                        matchedCriteria.push(`Matches desired car type: ${car.type}.`);
+                    } else {
+                        unmatchedCriteria.push(`Does not match desired car type (actual: ${car.type}, desired: ${userPreferences.carType.value}).`);
+                    }
+                }
+
+                const isPerfectMatch = unmatchedCriteria.length === 0 && Object.keys(userPreferences).length > 0; // Perfect match only if some preferences exist and all are met
+
+                return {
+                    ...car,
+                    score,
+                    isPerfectMatch,
+                    matchedCriteria,
+                    unmatchedCriteria
+                };
+            });
+
+            // Sort: perfect matches first, then by score, then by price (ascending) as a tie-breaker
+            rankedCars.sort((a, b) => {
+                if (a.isPerfectMatch && !b.isPerfectMatch) return -1;
+                if (!a.isPerfectMatch && b.isPerfectMatch) return 1;
+                if (b.score !== a.score) return b.score - a.score; // Higher score first
+                return a.price - b.price; // Lower price first for ties
+            });
+
+            return rankedCars;
+        }
+
+        // --- FLIP Animation and Rendering ---
+        function renderCarList(newlyRankedCars) {
+            const currentCarElements = Array.from(carListContainer.children);
+
+            // 1. FIRST: Record initial positions
+            const firstPositions = {};
+            currentCarElements.forEach(carEl => {
+                const id = carEl.dataset.carId;
+                firstPositions[id] = carEl.getBoundingClientRect();
+            });
+
+            // 2. LAST: Update the DOM with the new order
+            // Clear existing elements
+            while (carListContainer.firstChild) {
+                carListContainer.removeChild(carListContainer.firstChild);
+            }
+
+            // Append new elements in the sorted order
+            newlyRankedCars.forEach(car => {
+                const carEl = document.createElement('div');
+                carEl.classList.add('car-item', 'p-4', 'flex', 'flex-col', 'items-center', 'text-center');
+                carEl.dataset.carId = car.id;
+
+                // Add active/inactive classes
+                if (car.isPerfectMatch) {
+                    carEl.classList.add('active');
+                    carEl.classList.remove('inactive');
+                } else {
+                    carEl.classList.add('inactive');
+                    carEl.classList.remove('active');
+                }
+
+                // Conditionally render tooltip based on userPreferences
+                const tooltipHtml = Object.keys(userPreferences).length > 0 ? `
+                    <div class="tooltip">
+                        ${car.isPerfectMatch && car.matchedCriteria.length > 0 ?
+                            `<strong>Why this car is right for you:</strong><ul>${car.matchedCriteria.map(c => `<li>${c}</li>`).join('')}</ul>` :
+                            `<strong>Why this car doesn't fit all preferences:</strong><ul>${car.unmatchedCriteria.map(c => `<li>${c}</li>`).join('')}</ul>
+                             ${car.matchedCriteria.length > 0 ? `<strong>It does match:</strong><ul>${car.matchedCriteria.map(c => `<li>${c}</li>`).join('')}</ul>` : ''}`
+                        }
+                    </div>
+                ` : '';
+
+                carEl.innerHTML = `
+                    <img src="${car.imageUrl}" alt="${car.make} ${car.model}" class="w-full h-32 object-cover rounded-lg mb-3">
+                    <h3 class="text-lg font-semibold text-gray-900">${car.make} ${car.model}</h3>
+                    <p class="text-gray-700 text-sm">$${car.price.toLocaleString()}</p>
+                    <p class="text-gray-600 text-xs">${car.mpg.highway} HWY MPG | ${car.seating} Seats | ${car.type}</p>
+                    ${tooltipHtml}
+                `;
+                carListContainer.appendChild(carEl);
+            });
+
+            // 3. INVERT & 4. PLAY: Animate to new positions
+            // Re-select elements as DOM has changed
+            const newCarElements = Array.from(carListContainer.children);
+
+            newCarElements.forEach(carEl => {
+                const id = carEl.dataset.carId;
+                const lastPosition = carEl.getBoundingClientRect();
+                const firstPosition = firstPositions[id];
+
+                if (firstPosition) { // Only animate if the element was present before
+                    const deltaX = firstPosition.left - lastPosition.left;
+                    const deltaY = firstPosition.top - lastPosition.top;
+
+                    carEl.style.transition = 'none'; // Disable transition for the "invert" step
+                    carEl.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+                    // Force a repaint to ensure the transform is applied before the transition
+                    // eslint-disable-next-line no-unused-expressions
+                    carEl.offsetWidth;
+
+                    carEl.style.transition = 'transform 0.5s ease-out'; // Enable transition
+                    carEl.style.transform = 'translate(0, 0)'; // Animate back to final position
+                } else {
+                    // Handle newly added elements (e.g., fade in)
+                    carEl.style.opacity = '0';
+                    setTimeout(() => {
+                        carEl.style.transition = 'opacity 0.5s ease-in';
+                        carEl.style.opacity = '1';
+                    }, 50); // Small delay to allow initial render
+                }
+            });
+
+            // Handle removed elements (e.g., fade out and remove)
+            currentCarElements.forEach(oldCarEl => {
+                const id = oldCarEl.dataset.carId;
+                const isStillPresent = newlyRankedCars.some(car => car.id === id);
+                if (!isStillPresent) {
+                    oldCarEl.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+                    oldCarEl.style.opacity = '0';
+                    oldCarEl.style.transform = 'scale(0.9)';
+                    oldCarEl.addEventListener('transitionend', () => oldCarEl.remove(), { once: true });
+                }
+            });
+        }
+
+        // --- Drawer Toggle Functionality ---
+        function toggleDrawer() {
+            if (isDrawerOpen) {
+                // Close the drawer
+                chatDrawer.classList.remove('chat-drawer-open');
+                chatDrawer.classList.add('chat-drawer-closed');
+                carListContainerWrapper.classList.remove('w-2/3', 'mr-2');
+                carListContainerWrapper.classList.add('w-full');
+                chatContent.classList.add('hidden'); // Hide content immediately
+                chatDrawerHeader.classList.add('hidden'); // Hide header content
+                toggleIconOpen.classList.add('hidden');
+                toggleIconClosed.classList.remove('hidden');
+            } else {
+                // Open the drawer
+                chatDrawer.classList.remove('chat-drawer-closed');
+                chatDrawer.classList.add('chat-drawer-open');
+                carListContainerWrapper.classList.remove('w-full');
+                carListContainerWrapper.classList.add('w-2/3', 'mr-2');
+                chatContent.classList.remove('hidden'); // Show content
+                chatDrawerHeader.classList.remove('hidden'); // Show header content
+                toggleIconOpen.classList.remove('hidden');
+                toggleIconClosed.classList.add('hidden');
+            }
+            isDrawerOpen = !isDrawerOpen; // Toggle the state
+        }
+
+        // --- Event Listeners ---
+        sendButton.addEventListener('click', () => {
+            if (userInput.value.trim() !== '') {
+                processUserInput(userInput.value.trim());
+            }
+        });
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && userInput.value.trim() !== '') {
+                processUserInput(e.target.value.trim());
+            }
+        });
+
+        drawerToggle.addEventListener('click', toggleDrawer);
+
+        // Initial render on page load
+        window.onload = () => {
+            updateCarDisplay();
+            // Ensure drawer starts open
+            if (!isDrawerOpen) {
+                toggleDrawer(); // Call once if it's not open
+            }
+        };
+
+        function updateCarDisplay() {
+            const sortedCars = rankCars(cars, userPreferences);
+            renderCarList(sortedCars);
+        }
+
+    </script>
+</body>
+</html>
