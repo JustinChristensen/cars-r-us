@@ -149,15 +149,18 @@
             position: absolute;
             background-color: rgba(0, 0, 0, 0.85);
             color: white !important;
-            padding: 8px 12px;
+            padding: 12px 16px;
             border-radius: 8px;
             font-size: 0.875rem;
+            line-height: 1.4;
             white-space: normal;
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.2s, visibility 0.2s;
-            max-width: 400px;
+            max-width: 320px;
+            width: max-content;
+            min-width: 280px;
             left: 50%;
             transform: translateX(-50%);
             top: 100%;
@@ -712,6 +715,15 @@
                         addChatMessage(`🎉 Perfect! I found your ideal match: the ${perfectMatches[0].make} ${perfectMatches[0].model}. This car meets all your criteria perfectly!`, 'ai');
                         setTimeout(() => {
                             addChatMessage(`Ready to make it yours? Give us a call at (555) CAR-SALE to schedule a test drive and complete your purchase. Our team is standing by to help!`, 'ai');
+                        }, 1500);
+                    }, 500);
+                    isGuided = false; // Stop the guided experience
+                } else if (perfectMatches.length === 0 && guidedStep >= 3) {
+                    // If no perfect matches after collecting enough preferences, stop guided experience
+                    setTimeout(() => {
+                        addChatMessage("I couldn't find any cars that match all your criteria perfectly. The cars above are ranked by how well they match your preferences - the top ones are your best options!", 'ai');
+                        setTimeout(() => {
+                            addChatMessage("You can try adjusting your preferences, ask me specific questions, or say 'reset' to start over with fresh criteria.", 'ai');
                         }, 1500);
                     }, 500);
                     isGuided = false; // Stop the guided experience
