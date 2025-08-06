@@ -48,24 +48,7 @@
             animation: perfectMatchPulse 2s ease-in-out infinite;
             z-index: 20;
             position: relative;
-        }
-
-        .car-item.active.only-perfect-match::before {
-            content: "🎯 PERFECT MATCH!";
-            position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #dc2626, #ef4444);
-            color: white;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
-            z-index: 21;
+            margin: 15px 15px 15px 15px; /* Reduced top margin since no badge */
         }
 
         @keyframes perfectMatchPulse {
@@ -217,6 +200,7 @@
         #car-list-container {
             overflow-y: auto;
             max-height: calc(100vh - 120px); /* Adjust for header and padding */
+            padding: 10px; /* Add padding to prevent clipping of scaled cards */
         }
 
         #chat-drawer {
@@ -665,7 +649,18 @@
             const firstPositions = {};
             currentCarElements.forEach(carEl => {
                 const id = carEl.dataset.carId;
+                // Temporarily disable animation and scale transform to get accurate position measurements
+                const wasOnlyPerfectMatch = carEl.classList.contains('only-perfect-match');
+                if (wasOnlyPerfectMatch) {
+                    carEl.style.animation = 'none';
+                    carEl.style.transform = 'scale(1)';
+                }
                 firstPositions[id] = carEl.getBoundingClientRect();
+                // Restore the animation and scale if it was there
+                if (wasOnlyPerfectMatch) {
+                    carEl.style.animation = '';
+                    carEl.style.transform = '';
+                }
             });
 
             // 2. LAST: Update the DOM with the new order
@@ -757,6 +752,12 @@
 
             newCarElements.forEach(carEl => {
                 const id = carEl.dataset.carId;
+                // Temporarily disable animation and scale transform to get accurate position measurements
+                const isOnlyPerfectMatch = carEl.classList.contains('only-perfect-match');
+                if (isOnlyPerfectMatch) {
+                    carEl.style.animation = 'none';
+                    carEl.style.transform = 'scale(1)';
+                }
                 const lastPosition = carEl.getBoundingClientRect();
                 const firstPosition = firstPositions[id];
 
@@ -765,20 +766,38 @@
                     const deltaY = firstPosition.top - lastPosition.top;
 
                     carEl.style.transition = 'none'; // Disable transition for the "invert" step
-                    carEl.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+                    carEl.style.transform = `translate(${deltaX}px, ${deltaY}px)${isOnlyPerfectMatch ? ' scale(1.05)' : ''}`;
 
                     // Force a repaint to ensure the transform is applied before the transition
                     // eslint-disable-next-line no-unused-expressions
                     carEl.offsetWidth;
 
                     carEl.style.transition = 'transform 0.5s ease-out'; // Enable transition
-                    carEl.style.transform = 'translate(0, 0)'; // Animate back to final position
+                    carEl.style.transform = isOnlyPerfectMatch ? 'translate(0, 0) scale(1.05)' : 'translate(0, 0)'; // Animate back to final position with proper scale
+                    
+                    // After the transition completes, restore the CSS animation
+                    if (isOnlyPerfectMatch) {
+                        carEl.addEventListener('transitionend', () => {
+                            carEl.style.animation = '';
+                            carEl.style.transform = '';
+                            carEl.style.transition = '';
+                        }, { once: true });
+                    }
                 } else {
                     // Handle newly added elements (e.g., fade in)
+                    if (isOnlyPerfectMatch) {
+                        carEl.style.animation = 'none';
+                    }
                     carEl.style.opacity = '0';
                     setTimeout(() => {
                         carEl.style.transition = 'opacity 0.5s ease-in';
                         carEl.style.opacity = '1';
+                        // Restore animation after fade in
+                        if (isOnlyPerfectMatch) {
+                            setTimeout(() => {
+                                carEl.style.animation = '';
+                            }, 500);
+                        }
                     }, 50); // Small delay to allow initial render
                 }
             });
