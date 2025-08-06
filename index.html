@@ -199,14 +199,26 @@
 
         #car-list-container {
             overflow-y: auto;
-            max-height: calc(100vh - 120px); /* Adjust for header and padding */
-            padding: 10px; /* Add padding to prevent clipping of scaled cards */
+            max-height: calc(100vh - 96px); /* Match the other elements - just header height */
         }
 
         #chat-drawer {
             height: calc(100vh - 96px); /* Full remaining height after header and padding */
             display: flex;
             flex-direction: column;
+        }
+
+        #chat-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0; /* Important: allows flex children to shrink */
+        }
+
+        #chat-messages {
+            flex: 1;
+            min-height: 0; /* Important: allows the div to shrink and scroll */
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -216,9 +228,9 @@
         <h1 class="text-4xl font-extrabold text-gray-900 text-left ml-4">Cars R'Us</h1>
     </div>
 
-    <div class="flex w-full flex-grow items-start px-4 pb-4 relative">
+    <div class="flex w-full flex-grow items-start px-4 relative">
         <!-- Left Facet Sidebar -->
-        <div id="facet-sidebar" class="facet-sidebar flex flex-col rounded-xl">
+        <div id="facet-sidebar" class="facet-sidebar flex flex-col rounded-xl pb-4">
             <!-- Removed "Filter Cars" header as requested -->
             <h2 class="text-2xl font-bold mb-4 text-center sr-only">Filter Cars</h2>
 
@@ -292,7 +304,7 @@
         </div>
 
         <!-- Car List (Middle Content Area) - Dynamically sized -->
-        <div id="car-list-container-wrapper" class="flex flex-col px-4 pb-4 w-3/5 mr-4">
+        <div id="car-list-container-wrapper" class="flex flex-col px-4 w-3/5 mr-4">
             <div id="car-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto h-full">
                 <!-- Car items will be rendered here -->
             </div>
@@ -310,18 +322,18 @@
         </button>
 
         <!-- Chat Window (Right Sidebar) - Collapsible drawer -->
-        <div id="chat-drawer" class="flex flex-col chat-window chat-drawer-open">
+        <div id="chat-drawer" class="flex flex-col chat-window chat-drawer-open pb-4">
             <div id="chat-drawer-header" class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold text-gray-800 flex-grow text-left">AI Car Assistant</h2>
             </div>
-            <div id="chat-content" class="flex-grow flex flex-col">
-                <div id="chat-messages" class="flex-grow overflow-y-auto mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
+            <div id="chat-content" class="flex-grow flex flex-col min-h-0">
+                <div id="chat-messages" class="flex-1 mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50 min-h-0">
                     <!-- Chat messages will be appended here -->
                     <div class="chat-message ai p-3 my-2 max-w-[80%]">
                         Hi there! I can help you find your perfect car. Tell me what you're looking for, or say "guide me" and I'll ask you questions to find your ideal match!
                     </div>
                 </div>
-                <div class="flex w-full">
+                <div class="flex w-full flex-shrink-0">
                     <input type="text" id="user-input" placeholder="Type your preferences..."
                            class="flex-grow p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0">
                     <button id="send-button"
