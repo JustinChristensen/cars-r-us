@@ -318,7 +318,7 @@
                 <div id="chat-messages" class="flex-grow overflow-y-auto mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
                     <!-- Chat messages will be appended here -->
                     <div class="chat-message ai p-3 my-2 max-w-[80%]">
-                        Hi there! I can help you find your perfect car. Tell me what you're looking for!
+                        Hi there! I can help you find your perfect car. Tell me what you're looking for, or say "guide me" and I'll ask you questions to find your ideal match!
                     </div>
                 </div>
                 <div class="flex w-full">
@@ -377,6 +377,37 @@
             features: null
         };
 
+        // --- Guided Experience State ---
+        let isGuided = false;
+        let guidedStep = 0;
+        let guidedQuestions = [
+            {
+                question: "What's your budget range? (e.g., 'under 30k', 'between 25k and 40k', or 'around 35k')",
+                preference: 'priceRange',
+                pattern: /(?:between\s*\$*(\d+k?)\s*and\s*\$*(\d+k?)|under\s*\$*(\d+k?)|over\s*\$*(\d+k?)|around\s*\$*(\d+k?))/i
+            },
+            {
+                question: "What type of vehicle are you looking for? (SUV, Sedan, Truck, or Electric Vehicle)",
+                preference: 'carType',
+                pattern: /(suv|sedan|truck|electric|ev)/i
+            },
+            {
+                question: "Do you have a brand preference? (Honda, Toyota, Ford, Tesla, BMW, Chevrolet, Hyundai, or 'no preference')",
+                preference: 'brand',
+                pattern: /(honda|toyota|ford|tesla|bmw|chevrolet|hyundai|no preference)/i
+            },
+            {
+                question: "How many seats do you need? (2, 4, 5, 6, 7, 8, or 9)",
+                preference: 'seatingCapacity',
+                pattern: /(\d+)\s*seats?/i
+            },
+            {
+                question: "Is fuel efficiency important to you? (e.g., 'yes', 'at least 30 mpg', or 'not important')",
+                preference: 'minMPGHighway',
+                pattern: /(yes|at least (\d+)|not important|\d+ mpg)/i
+            }
+        ];
+
         // --- DOM Elements ---
         const chatMessagesDiv = document.getElementById('chat-messages');
         const userInput = document.getElementById('user-input');
@@ -416,6 +447,164 @@
             chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
         }
 
+        // Function to start guided experience
+        function startGuidedExperience() {
+            isGuided = true;
+            guidedStep = 0;
+            // Reset preferences for a fresh start
+            userPreferences = {
+                brand: null,
+                priceRange: null,
+                minMPGHighway: null,
+                seatingCapacity: null,
+                carType: null,
+                features: null
+            };
+            updateFacetUI();
+            askNextGuidedQuestion();
+        }
+
+        // Function to ask the next guided question
+        function askNextGuidedQuestion() {
+            if (guidedStep >= guidedQuestions.length) {
+                // All questions answered, check results
+                const rankedCars = rankCars(cars, userPreferences);
+                const perfectMatches = rankedCars.filter(car => car.isPerfectMatch);
+                
+                if (perfectMatches.length === 1) {
+                    addChatMessage(`Perfect! Based on your preferences, I found the ideal car for you: the ${perfectMatches[0].make} ${perfectMatches[0].model}. It's highlighted above!`, 'ai');
+                    isGuided = false;
+                } else if (perfectMatches.length === 0) {
+                    addChatMessage("I couldn't find a perfect match with all your criteria, but I've ranked the cars by how well they match your preferences. The top ones are your best options!", 'ai');
+                    isGuided = false;
+                } else {
+                    addChatMessage(`Great! I found ${perfectMatches.length} cars that match all your criteria. You can see them highlighted above, or feel free to ask me more specific questions to narrow it down further.`, 'ai');
+                    isGuided = false;
+                }
+                return;
+            }
+
+            const question = guidedQuestions[guidedStep];
+            addChatMessage(question.question, 'ai');
+        }
+
+        // Function to process guided response
+        function processGuidedResponse(input) {
+            const question = guidedQuestions[guidedStep];
+            const lowerInput = input.toLowerCase();
+            let processed = false;
+
+            switch (question.preference) {
+                case 'priceRange':
+                    const rangeMatch = lowerInput.match(/between\s*\$*(\d+k?)\s*and\s*\$*(\d+k?)/);
+                    const underMatch = lowerInput.match(/under\s*\$*(\d+k?)/);
+                    const overMatch = lowerInput.match(/over\s*\$*(\d+k?)/);
+                    const aroundMatch = lowerInput.match(/around\s*\$*(\d+k?)/);
+                    
+                    if (rangeMatch) {
+                        let minPrice = parseInt(rangeMatch[1].replace('k', '000'), 10);
+                        let maxPrice = parseInt(rangeMatch[2].replace('k', '000'), 10);
+                        userPreferences.priceRange = { value: {min: minPrice, max: maxPrice}, weight: 3, description: `price between $${minPrice.toLocaleString()} and $${maxPrice.toLocaleString()}` };
+                        addChatMessage(`Got it! Looking for cars between $${minPrice.toLocaleString()} and $${maxPrice.toLocaleString()}.`, 'ai');
+                        processed = true;
+                    } else if (underMatch) {
+                        let maxPrice = parseInt(underMatch[1].replace('k', '000'), 10);
+                        userPreferences.priceRange = { value: {min: 10000, max: maxPrice}, weight: 3, description: `price under $${maxPrice.toLocaleString()}` };
+                        addChatMessage(`Perfect! Focusing on cars under $${maxPrice.toLocaleString()}.`, 'ai');
+                        processed = true;
+                    } else if (overMatch) {
+                        let minPrice = parseInt(overMatch[1].replace('k', '000'), 10);
+                        userPreferences.priceRange = { value: {min: minPrice, max: 100000}, weight: 3, description: `price over $${minPrice.toLocaleString()}` };
+                        addChatMessage(`Understood! Looking for cars over $${minPrice.toLocaleString()}.`, 'ai');
+                        processed = true;
+                    } else if (aroundMatch) {
+                        let targetPrice = parseInt(aroundMatch[1].replace('k', '000'), 10);
+                        let minPrice = Math.max(10000, targetPrice - 5000);
+                        let maxPrice = Math.min(100000, targetPrice + 5000);
+                        userPreferences.priceRange = { value: {min: minPrice, max: maxPrice}, weight: 3, description: `price around $${targetPrice.toLocaleString()}` };
+                        addChatMessage(`Great! Searching for cars around $${targetPrice.toLocaleString()}.`, 'ai');
+                        processed = true;
+                    }
+                    break;
+
+                case 'carType':
+                    if (lowerInput.includes('suv')) {
+                        userPreferences.carType = { value: 'SUV', weight: 3, description: "an SUV" };
+                        addChatMessage("SUVs it is! Great for versatility and space.", 'ai');
+                        processed = true;
+                    } else if (lowerInput.includes('sedan')) {
+                        userPreferences.carType = { value: 'Sedan', weight: 3, description: "a Sedan" };
+                        addChatMessage("Sedans are excellent for comfort and fuel efficiency!", 'ai');
+                        processed = true;
+                    } else if (lowerInput.includes('truck')) {
+                        userPreferences.carType = { value: 'Truck', weight: 3, description: "a Truck" };
+                        addChatMessage("Trucks are perfect for hauling and capability!", 'ai');
+                        processed = true;
+                    } else if (lowerInput.includes('electric') || lowerInput.includes('ev')) {
+                        userPreferences.carType = { value: 'EV', weight: 3, description: "an Electric Vehicle" };
+                        addChatMessage("Electric vehicles - great choice for the environment and efficiency!", 'ai');
+                        processed = true;
+                    }
+                    break;
+
+                case 'brand':
+                    if (lowerInput.includes('no preference')) {
+                        addChatMessage("No problem! I'll consider all brands.", 'ai');
+                        processed = true;
+                    } else {
+                        const knownBrands = ["honda", "toyota", "tesla", "ford", "bmw", "chevrolet", "hyundai"];
+                        for (const brand of knownBrands) {
+                            if (lowerInput.includes(brand)) {
+                                let displayBrand = brand.charAt(0).toUpperCase() + brand.slice(1);
+                                userPreferences.brand = { value: displayBrand, weight: 2, description: `brand preference: ${displayBrand}` };
+                                addChatMessage(`${displayBrand} is a great choice!`, 'ai');
+                                processed = true;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+
+                case 'seatingCapacity':
+                    const seatMatch = lowerInput.match(/(\d+)/);
+                    if (seatMatch) {
+                        const seatingValue = parseInt(seatMatch[1], 10);
+                        userPreferences.seatingCapacity = { value: seatingValue, weight: 2, description: `at least ${seatingValue} seats` };
+                        addChatMessage(`Perfect! Looking for cars with at least ${seatingValue} seats.`, 'ai');
+                        processed = true;
+                    }
+                    break;
+
+                case 'minMPGHighway':
+                    if (lowerInput.includes('not important')) {
+                        addChatMessage("Understood! Fuel efficiency won't be a priority.", 'ai');
+                        processed = true;
+                    } else if (lowerInput.includes('yes')) {
+                        userPreferences.minMPGHighway = { value: 30, weight: 2, description: "good highway MPG" };
+                        addChatMessage("Great! I'll prioritize fuel-efficient vehicles.", 'ai');
+                        processed = true;
+                    } else {
+                        const mpgMatch = lowerInput.match(/(\d+)/);
+                        if (mpgMatch) {
+                            const mpgValue = parseInt(mpgMatch[1], 10);
+                            userPreferences.minMPGHighway = { value: mpgValue, weight: 2, description: `highway MPG of at least ${mpgValue}` };
+                            addChatMessage(`Got it! Looking for cars with at least ${mpgValue} highway MPG.`, 'ai');
+                            processed = true;
+                        }
+                    }
+                    break;
+            }
+
+            if (processed) {
+                guidedStep++;
+                updateFacetUI();
+                updateCarDisplay();
+                setTimeout(() => askNextGuidedQuestion(), 500); // Small delay before next question
+            } else {
+                addChatMessage("I didn't quite understand that. Could you please try again?", 'ai');
+            }
+        }
+
         // Simulates AI processing and updating preferences
         async function processUserInput(input) {
             addChatMessage(input, 'user');
@@ -434,10 +623,23 @@
             // Remove loading indicator
             chatMessagesDiv.removeChild(loadingDiv);
 
+            const lowerInput = input.toLowerCase();
+
+            // Check if user wants guided experience
+            if (lowerInput.includes('guide me') || lowerInput.includes('guide')) {
+                addChatMessage("I'd be happy to guide you! I'll ask you a few questions to find your perfect car.", 'ai');
+                startGuidedExperience();
+                return;
+            }
+
+            // If we're in guided mode, process the response differently
+            if (isGuided) {
+                processGuidedResponse(input);
+                return;
+            }
+
             let aiResponse = "I'm not sure how to interpret that. Can you tell me more about what you're looking for?";
             let preferenceUpdated = false;
-
-            const lowerInput = input.toLowerCase();
 
             // --- Preference Parsing Logic (simplified for demo) ---
             // Brand preference
@@ -556,7 +758,7 @@
                 }
             } else if (lowerInput.includes("reset") || lowerInput.includes("clear preferences")) {
                 resetPreferences(); // Call the new reset function
-                aiResponse = "Okay, I've cleared all your preferences. What would you like to start with?";
+                aiResponse = "Okay, I've cleared all your preferences. What would you like to start with? You can also say 'guide me' for a step-by-step experience!";
                 preferenceUpdated = true;
             }
 
@@ -1026,6 +1228,8 @@
                 carType: null,
                 features: null
             };
+            isGuided = false;
+            guidedStep = 0;
             updateFacetUI(); // Reset UI elements
             updateCarDisplay(); // Re-render cars
             addChatMessage("All filters have been reset.", "ai");
