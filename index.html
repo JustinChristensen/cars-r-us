@@ -39,15 +39,24 @@
             background-color: #dbeafe; /* Lighter blue background */
         }
 
-        /* Inactive (partial/no match) styling */
+        /* Partial match styling - medium opacity */
+        .car-item.partial {
+            border-color: #f59e0b; /* Orange border for partial matches */
+            background-color: #fef3c7; /* Light orange background */
+        }
+        .car-item.partial .car-content {
+            opacity: 0.75; /* Medium opacity */
+            color: #78716c; /* Slightly muted text */
+        }
+
+        /* Inactive (no match) styling - most muted */
         .car-item.inactive {
             border-color: #e5e7eb; /* Even lighter border */
             background-color: #f3f4f6; /* Muted gray background */
-            /* Remove muted text color from container, move to .car-content below */
         }
         .car-item.inactive .car-content {
-            opacity: 0.5;
-            color: #94a3b8; /* Muted text color only for content */
+            opacity: 0.4; /* Lowest opacity */
+            color: #94a3b8; /* Most muted text color */
         }
 
         .chat-window {
@@ -336,6 +345,15 @@
                 } else {
                     aiResponse = "You already mentioned AWD!";
                 }
+            } else if (lowerInput.includes("fwd") || lowerInput.includes("front-wheel drive") || lowerInput.includes("front wheel drive")) {
+                if (!userPreferences.features) userPreferences.features = { value: [], weight: 1, description: "specific features" };
+                if (!userPreferences.features.value.includes('FWD')) {
+                    userPreferences.features.value.push('FWD');
+                    aiResponse = "Adding 'FWD' to your desired features.";
+                    preferenceUpdated = true;
+                } else {
+                    aiResponse = "You already mentioned FWD!";
+                }
             } else if (lowerInput.includes("apple carplay")) {
                 if (!userPreferences.features) userPreferences.features = { value: [], weight: 1, description: "specific features" };
                 if (!userPreferences.features.value.includes('Apple CarPlay')) {
@@ -469,13 +487,15 @@
 
                 const hasPreferences = Object.keys(userPreferences).length > 0;
                 const isPerfectMatch = hasPreferences && unmatchedCriteria.length === 0; // Perfect match only if some preferences exist and all are met
-                const isPartialMatch = hasPreferences && unmatchedCriteria.length > 0; // Partial match if preferences exist but some don't match
+                const isPartialMatch = hasPreferences && unmatchedCriteria.length > 0 && matchedCriteria.length > 0; // Partial match if preferences exist and some match but not all
+                const isNoMatch = hasPreferences && matchedCriteria.length === 0; // No match if preferences exist but none match
 
                 return {
                     ...car,
                     score,
                     isPerfectMatch,
                     isPartialMatch,
+                    isNoMatch,
                     matchedCriteria,
                     unmatchedCriteria
                 };
@@ -515,10 +535,12 @@
                 carEl.classList.add('car-item', 'p-4', 'flex', 'flex-col', 'items-center', 'text-center');
                 carEl.dataset.carId = car.id;
 
-                // Only add 'active' if perfect match, 'inactive' if partial match (has preferences but doesn't match all)
+                // Apply styling based on match level: perfect (active), partial, or no match (inactive)
                 if (car.isPerfectMatch) {
                     carEl.classList.add('active');
                 } else if (car.isPartialMatch) {
+                    carEl.classList.add('partial');
+                } else if (car.isNoMatch) {
                     carEl.classList.add('inactive');
                 }
 
