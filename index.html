@@ -417,6 +417,11 @@
                 question: "Is fuel efficiency important to you? (e.g., 'yes', 'at least 30 mpg', or 'not important')",
                 preference: 'minMPGHighway',
                 pattern: /(yes|at least (\d+)|not important|\d+ mpg)/i
+            },
+            {
+                question: "Are there any specific features you want? (e.g., 'AWD', 'sunroof', 'Apple CarPlay', 'heated seats', 'backup camera', or 'no specific features')",
+                preference: 'features',
+                pattern: /(awd|fwd|4x4|sunroof|carplay|android auto|heated seats|leather|navigation|backup camera|towing|autopilot|fast charging|third row|3rd row|no specific features)/i
             }
         ];
 
@@ -608,6 +613,89 @@
                         }
                     }
                     break;
+
+                case 'features':
+                    if (lowerInput.includes('no specific features')) {
+                        addChatMessage("No problem! I won't prioritize any specific features.", 'ai');
+                        processed = true;
+                    } else {
+                        // Use the same feature mapping as in the main chat processing
+                        const featureMap = {
+                            'awd': 'AWD',
+                            'all-wheel drive': 'AWD', 
+                            'all wheel drive': 'AWD',
+                            'fwd': 'FWD',
+                            'front-wheel drive': 'FWD',
+                            'front wheel drive': 'FWD',
+                            '4x4': '4x4',
+                            'four wheel drive': '4x4',
+                            'four-wheel drive': '4x4',
+                            'apple carplay': 'Apple CarPlay',
+                            'carplay': 'Apple CarPlay',
+                            'android auto': 'Android Auto',
+                            'autopilot': 'Autopilot',
+                            'wireless charging': 'wireless charging',
+                            'backup camera': 'Backup Camera',
+                            'backup cam': 'Backup Camera',
+                            'rear camera': 'Backup Camera',
+                            'honda sensing': 'Honda Sensing',
+                            'toyota safety sense': 'Toyota Safety Sense',
+                            'adaptive cruise control': 'adaptive cruise control',
+                            'cruise control': 'adaptive cruise control',
+                            'blind spot monitor': 'blind spot monitor',
+                            'blind spot': 'blind spot monitor',
+                            'lane keeping assist': 'Lane Keeping Assist',
+                            'lane assist': 'Lane Keeping Assist',
+                            'sunroof': 'sunroof',
+                            'sun roof': 'sunroof',
+                            'panoramic sunroof': 'Panoramic Sunroof',
+                            'panoramic glass roof': 'panoramic glass roof',
+                            'heated seats': 'Heated Seats',
+                            'leather seats': 'Leather Seats',
+                            'leather': 'Leather Seats',
+                            '3rd row seating': '3rd row seating',
+                            'third row seating': '3rd row seating',
+                            'third row': '3rd row seating',
+                            '3rd row': '3rd row seating',
+                            'jbl audio': 'JBL audio',
+                            'jbl': 'JBL audio',
+                            'bose audio': 'Bose audio',
+                            'bose': 'Bose audio',
+                            'harman kardon audio': 'Harman Kardon audio',
+                            'harman kardon': 'Harman Kardon audio',
+                            'sync 4': 'SYNC 4',
+                            'sync4': 'SYNC 4',
+                            'sync 4a': 'SYNC 4A',
+                            'sync4a': 'SYNC 4A',
+                            'navigation': 'Navigation',
+                            'nav': 'Navigation',
+                            'gps': 'Navigation',
+                            'fast charging': 'Fast Charging',
+                            'rapid charging': 'Fast Charging',
+                            'quick charging': 'Fast Charging',
+                            'towing package': 'Towing Package',
+                            'towing': 'Towing Package',
+                            'tow package': 'Towing Package',
+                            'large bed': 'large bed',
+                            'truck bed': 'large bed'
+                        };
+                        
+                        const foundFeatures = [];
+                        for (const [searchTerm, featureName] of Object.entries(featureMap)) {
+                            if (lowerInput.includes(searchTerm)) {
+                                if (!foundFeatures.includes(featureName)) {
+                                    foundFeatures.push(featureName);
+                                }
+                            }
+                        }
+                        
+                        if (foundFeatures.length > 0) {
+                            userPreferences.features = { value: foundFeatures, weight: 1, description: `specific features: ${foundFeatures.join(', ')}` };
+                            addChatMessage(`Great! I'll prioritize cars with: ${foundFeatures.join(', ')}.`, 'ai');
+                            processed = true;
+                        }
+                    }
+                    break;
             }
 
             if (processed) {
@@ -735,34 +823,107 @@
                     aiResponse = "Okay, I'll look for cars in an affordable price range.";
                     preferenceUpdated = true;
                 }
-            } else if (lowerInput.includes("awd") || lowerInput.includes("all-wheel drive")) {
-                if (!userPreferences.features) userPreferences.features = { value: [], weight: 1, description: "specific features" };
-                if (!userPreferences.features.value.includes('AWD')) {
-                    userPreferences.features.value.push('AWD');
-                    aiResponse = "Adding 'AWD' to your desired features.";
-                    preferenceUpdated = true;
-                } else {
-                    aiResponse = "You already mentioned AWD!";
+            } else {
+                // Check for feature preferences using a comprehensive mapping
+                const featureMap = {
+                    // Drive train features
+                    'awd': 'AWD',
+                    'all-wheel drive': 'AWD', 
+                    'all wheel drive': 'AWD',
+                    'fwd': 'FWD',
+                    'front-wheel drive': 'FWD',
+                    'front wheel drive': 'FWD',
+                    '4x4': '4x4',
+                    'four wheel drive': '4x4',
+                    'four-wheel drive': '4x4',
+                    
+                    // Tech features
+                    'apple carplay': 'Apple CarPlay',
+                    'carplay': 'Apple CarPlay',
+                    'android auto': 'Android Auto',
+                    'autopilot': 'Autopilot',
+                    'wireless charging': 'wireless charging',
+                    'backup camera': 'Backup Camera',
+                    'backup cam': 'Backup Camera',
+                    'rear camera': 'Backup Camera',
+                    
+                    // Safety features
+                    'honda sensing': 'Honda Sensing',
+                    'toyota safety sense': 'Toyota Safety Sense',
+                    'adaptive cruise control': 'adaptive cruise control',
+                    'cruise control': 'adaptive cruise control',
+                    'blind spot monitor': 'blind spot monitor',
+                    'blind spot': 'blind spot monitor',
+                    'lane keeping assist': 'Lane Keeping Assist',
+                    'lane assist': 'Lane Keeping Assist',
+                    
+                    // Comfort features
+                    'sunroof': 'sunroof',
+                    'sun roof': 'sunroof',
+                    'panoramic sunroof': 'Panoramic Sunroof',
+                    'panoramic glass roof': 'panoramic glass roof',
+                    'heated seats': 'Heated Seats',
+                    'leather seats': 'Leather Seats',
+                    'leather': 'Leather Seats',
+                    
+                    // Seating features
+                    '3rd row seating': '3rd row seating',
+                    'third row seating': '3rd row seating',
+                    'third row': '3rd row seating',
+                    '3rd row': '3rd row seating',
+                    
+                    // Audio features
+                    'jbl audio': 'JBL audio',
+                    'jbl': 'JBL audio',
+                    'bose audio': 'Bose audio',
+                    'bose': 'Bose audio',
+                    'harman kardon audio': 'Harman Kardon audio',
+                    'harman kardon': 'Harman Kardon audio',
+                    
+                    // Infotainment features
+                    'sync 4': 'SYNC 4',
+                    'sync4': 'SYNC 4',
+                    'sync 4a': 'SYNC 4A',
+                    'sync4a': 'SYNC 4A',
+                    'navigation': 'Navigation',
+                    'nav': 'Navigation',
+                    'gps': 'Navigation',
+                    
+                    // EV features
+                    'fast charging': 'Fast Charging',
+                    'rapid charging': 'Fast Charging',
+                    'quick charging': 'Fast Charging',
+                    
+                    // Truck features
+                    'towing package': 'Towing Package',
+                    'towing': 'Towing Package',
+                    'tow package': 'Towing Package',
+                    'large bed': 'large bed',
+                    'truck bed': 'large bed'
+                };
+                
+                let foundFeature = null;
+                let matchedText = null;
+                
+                // Check each feature mapping
+                for (const [searchTerm, featureName] of Object.entries(featureMap)) {
+                    if (lowerInput.includes(searchTerm)) {
+                        foundFeature = featureName;
+                        matchedText = searchTerm;
+                        break;
+                    }
                 }
-            } else if (lowerInput.includes("fwd") || lowerInput.includes("front-wheel drive") || lowerInput.includes("front wheel drive")) {
-                if (!userPreferences.features) userPreferences.features = { value: [], weight: 1, description: "specific features" };
-                if (!userPreferences.features.value.includes('FWD')) {
-                    userPreferences.features.value.push('FWD');
-                    aiResponse = "Adding 'FWD' to your desired features.";
-                    preferenceUpdated = true;
-                } else {
-                    aiResponse = "You already mentioned FWD!";
-                }
-            } else if (lowerInput.includes("apple carplay")) {
-                if (!userPreferences.features) userPreferences.features = { value: [], weight: 1, description: "specific features" };
-                if (!userPreferences.features.value.includes('Apple CarPlay')) {
-                    userPreferences.features.value.push('Apple CarPlay');
-                    aiResponse = "Adding 'Apple CarPlay' to your desired features.";
-                    preferenceUpdated = true;
-                } else {
-                    aiResponse = "You already mentioned Apple CarPlay!";
-                }
-            } else if (lowerInput.includes("suv")) {
+                
+                if (foundFeature) {
+                    if (!userPreferences.features) userPreferences.features = { value: [], weight: 1, description: "specific features" };
+                    if (!userPreferences.features.value.includes(foundFeature)) {
+                        userPreferences.features.value.push(foundFeature);
+                        aiResponse = `Adding '${foundFeature}' to your desired features.`;
+                        preferenceUpdated = true;
+                    } else {
+                        aiResponse = `You already mentioned ${foundFeature}!`;
+                    }
+                } else if (lowerInput.includes("suv")) {
                 userPreferences.carType = { value: 'SUV', weight: 3, description: "an SUV" };
                 aiResponse = "Prioritizing SUVs for you.";
                 preferenceUpdated = true;
@@ -773,6 +934,10 @@
             } else if (lowerInput.includes("electric") || lowerInput.includes("ev")) {
                 userPreferences.carType = { value: 'EV', weight: 3, description: "an Electric Vehicle" };
                 aiResponse = "Looking into Electric Vehicles for you.";
+                preferenceUpdated = true;
+            } else if (lowerInput.includes("truck") || lowerInput.includes("pickup")) {
+                userPreferences.carType = { value: 'Truck', weight: 3, description: "a Truck" };
+                aiResponse = "Looking for trucks - great for hauling and capability!";
                 preferenceUpdated = true;
             } else if (lowerInput.includes("seats") || lowerInput.includes("seating")) {
                 const match = lowerInput.match(/(\d+)\s*seats?/);
@@ -791,6 +956,7 @@
                 aiResponse = "Okay, I've cleared all your preferences. What would you like to start with? You can also say 'guide me' for a step-by-step experience!";
                 preferenceUpdated = true;
             }
+            } // End of main else block for feature/car type detection
 
             addChatMessage(aiResponse, 'ai');
 
