@@ -66,6 +66,33 @@ const cars = [
     
     // Hyundai Group - Downtown
     { id: 'car16', make: 'Hyundai', model: 'Elantra', price: 22000, mpg: { city: 31, highway: 41 }, seating: 5, features: ['Apple CarPlay', 'Android Auto', 'Lane Keeping Assist'], safetyRating: 4, type: 'Sedan', dealershipId: 'downtown', imageUrl: 'https://placehold.co/400x250/FCE4EC/AD1457?text=Hyundai+Elantra' },
+    
+    // Nissan Group - Distributed
+    { id: 'car17', make: 'Nissan', model: 'Altima', price: 25000, mpg: { city: 28, highway: 39 }, seating: 5, features: ['Apple CarPlay', 'Android Auto', 'blind spot monitor'], safetyRating: 4, type: 'Sedan', dealershipId: 'northside', imageUrl: 'https://placehold.co/400x250/E3F2FD/1976D2?text=Nissan+Altima' },
+    { id: 'car18', make: 'Nissan', model: 'Rogue', price: 29000, mpg: { city: 27, highway: 35 }, seating: 5, features: ['AWD', 'Apple CarPlay', 'Backup Camera'], safetyRating: 4, type: 'SUV', dealershipId: 'westend', imageUrl: 'https://placehold.co/400x250/E3F2FD/1976D2?text=Nissan+Rogue' },
+    { id: 'car19', make: 'Nissan', model: 'Pathfinder', price: 36000, mpg: { city: 21, highway: 28 }, seating: 8, features: ['AWD', '3rd row seating', 'Heated Seats'], safetyRating: 4, type: 'SUV', dealershipId: 'downtown', imageUrl: 'https://placehold.co/400x250/E3F2FD/1976D2?text=Nissan+Pathfinder' },
+    
+    // Mazda Group - Distributed
+    { id: 'car20', make: 'Mazda', model: 'Mazda3', price: 24000, mpg: { city: 26, highway: 35 }, seating: 5, features: ['Apple CarPlay', 'Backup Camera', 'Lane Keeping Assist'], safetyRating: 5, type: 'Sedan', dealershipId: 'northside', imageUrl: 'https://placehold.co/400x250/F1F8E9/689F38?text=Mazda+Mazda3' },
+    { id: 'car21', make: 'Mazda', model: 'CX-5', price: 31000, mpg: { city: 25, highway: 31 }, seating: 5, features: ['AWD', 'Apple CarPlay', 'sunroof'], safetyRating: 5, type: 'SUV', dealershipId: 'westend', imageUrl: 'https://placehold.co/400x250/F1F8E9/689F38?text=Mazda+CX-5' },
+    { id: 'car22', make: 'Mazda', model: 'CX-9', price: 37000, mpg: { city: 20, highway: 26 }, seating: 7, features: ['AWD', '3rd row seating', 'Leather Seats'], safetyRating: 5, type: 'SUV', dealershipId: 'downtown', imageUrl: 'https://placehold.co/400x250/F1F8E9/689F38?text=Mazda+CX-9' },
+    
+    // Subaru Group - Distributed
+    { id: 'car23', make: 'Subaru', model: 'Outback', price: 28000, mpg: { city: 26, highway: 33 }, seating: 5, features: ['AWD', 'Apple CarPlay', 'Backup Camera'], safetyRating: 5, type: 'SUV', dealershipId: 'northside', imageUrl: 'https://placehold.co/400x250/E8F5E9/2E7D32?text=Subaru+Outback' },
+    { id: 'car24', make: 'Subaru', model: 'Forester', price: 27000, mpg: { city: 26, highway: 33 }, seating: 5, features: ['AWD', 'Apple CarPlay', 'sunroof'], safetyRating: 5, type: 'SUV', dealershipId: 'westend', imageUrl: 'https://placehold.co/400x250/E8F5E9/2E7D32?text=Subaru+Forester' },
+    { id: 'car25', make: 'Subaru', model: 'Ascent', price: 33000, mpg: { city: 21, highway: 27 }, seating: 8, features: ['AWD', '3rd row seating', 'Apple CarPlay'], safetyRating: 5, type: 'SUV', dealershipId: 'downtown', imageUrl: 'https://placehold.co/400x250/E8F5E9/2E7D32?text=Subaru+Ascent' },
+    
+    // Volkswagen Group - Distributed
+    { id: 'car26', make: 'Volkswagen', model: 'Jetta', price: 23000, mpg: { city: 30, highway: 40 }, seating: 5, features: ['Apple CarPlay', 'Android Auto', 'sunroof'], safetyRating: 4, type: 'Sedan', dealershipId: 'northside', imageUrl: 'https://placehold.co/400x250/F3E5F5/4A148C?text=Volkswagen+Jetta' },
+    { id: 'car27', make: 'Volkswagen', model: 'Tiguan', price: 34000, mpg: { city: 22, highway: 29 }, seating: 7, features: ['AWD', '3rd row seating', 'Apple CarPlay'], safetyRating: 4, type: 'SUV', dealershipId: 'westend', imageUrl: 'https://placehold.co/400x250/F3E5F5/4A148C?text=Volkswagen+Tiguan' },
+    
+    // Acura Group - Distributed
+    { id: 'car28', make: 'Acura', model: 'TLX', price: 39000, mpg: { city: 22, highway: 31 }, seating: 5, features: ['Leather Seats', 'sunroof', 'Apple CarPlay'], safetyRating: 5, type: 'Sedan', dealershipId: 'downtown', imageUrl: 'https://placehold.co/400x250/FFF3E0/F57C00?text=Acura+TLX' },
+    { id: 'car29', make: 'Acura', model: 'MDX', price: 49000, mpg: { city: 19, highway: 26 }, seating: 7, features: ['AWD', 'Leather Seats', '3rd row seating'], safetyRating: 5, type: 'SUV', dealershipId: 'northside', imageUrl: 'https://placehold.co/400x250/FFF3E0/F57C00?text=Acura+MDX' },
+    
+    // Lexus Group - Distributed  
+    { id: 'car30', make: 'Lexus', model: 'IS', price: 42000, mpg: { city: 21, highway: 31 }, seating: 5, features: ['Leather Seats', 'sunroof', 'Navigation'], safetyRating: 5, type: 'Sedan', dealershipId: 'westend', imageUrl: 'https://placehold.co/400x250/EFEBE9/5D4037?text=Lexus+IS' },
+    { id: 'car31', make: 'Lexus', model: 'GX', price: 58000, mpg: { city: 15, highway: 20 }, seating: 7, features: ['AWD', 'Leather Seats', 'Towing Package'], safetyRating: 5, type: 'SUV', dealershipId: 'downtown', imageUrl: 'https://placehold.co/400x250/EFEBE9/5D4037?text=Lexus+GX' },
 ];
 
 // --- User Preferences (will be updated by chat and facets) ---
