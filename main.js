@@ -132,6 +132,12 @@ const toggleIconOpen = document.getElementById('toggle-icon-open');
 const toggleIconClosed = document.getElementById('toggle-icon-closed');
 const chatContent = document.getElementById('chat-content');
 const chatDrawerHeader = document.getElementById('chat-drawer-header');
+const facetSidebar = document.getElementById('facet-sidebar');
+
+// --- Application State ---
+let isInFullWidthMode = true; // Start in full-width chat mode
+let hasProvidedZipCode = false; // Track if user has provided zip code
+let isDrawerOpen = false; // Track drawer state (starts closed)
 
 // Facet DOM Elements
 const facetBrandSelect = document.getElementById('facet-brand');
@@ -146,8 +152,6 @@ const facetSeatingSelect = document.getElementById('facet-seating');
 const facetDealershipSelect = document.getElementById('facet-dealership');
 const facetFeaturesDiv = document.getElementById('facet-features');
 const facetResetButton = document.getElementById('facet-reset-button');
-
-let isDrawerOpen = true; // Initial state: drawer is open
 
 // --- Utility Functions ---
 
@@ -467,6 +471,38 @@ async function processUserInput(input) {
 
     const lowerInput = input.toLowerCase();
 
+    // Check if we're in full-width mode and user hasn't provided zip code yet
+    if (isInFullWidthMode && !hasProvidedZipCode) {
+        // Look for zip code pattern (5 digits)
+        const zipCodeMatch = input.match(/\b(\d{5})\b/);
+        if (zipCodeMatch) {
+            const zipCode = zipCodeMatch[1];
+            hasProvidedZipCode = true;
+            
+            // Find nearest dealership
+            const nearestDealership = findNearestDealership(zipCode);
+            userPreferences.dealership = { value: nearestDealership, weight: 1, description: `Dealership location preference` };
+            
+            // Get dealership info
+            const dealership = dealerships.find(d => d.id === nearestDealership);
+            
+            addChatMessage(`Perfect! I found cars available at ${dealership.name} near ${zipCode}. Let me show you our inventory and help you find your perfect match!`, 'ai');
+            
+            // Transition to sidebar mode
+            transitionToSidebarMode();
+            
+            // After a brief delay, ask about preferences
+            setTimeout(() => {
+                addChatMessage("Now, tell me what you're looking for, or say 'guide me' and I'll ask you questions to find your ideal car!", 'ai');
+            }, 1000);
+            
+            return;
+        } else {
+            addChatMessage("I need a valid 5-digit zip code to find dealerships near you. Could you please provide your zip code?", 'ai');
+            return;
+        }
+    }
+
     // Check if user wants guided experience
     if (lowerInput.includes('guide me') || lowerInput.includes('guide')) {
         addChatMessage("I'd be happy to guide you! I'll ask you a few questions to find your perfect car.", 'ai');
@@ -725,7 +761,13 @@ async function processUserInput(input) {
 
 // --- Ranking Algorithm ---
 function rankCars(cars, userPreferences) {
-    const rankedCars = cars.map(car => {
+    // Filter cars by dealership if preference is set (for zip code flow)
+    let filteredCars = cars;
+    if (userPreferences.dealership && userPreferences.dealership.value) {
+        filteredCars = cars.filter(car => car.dealershipId === userPreferences.dealership.value);
+    }
+    
+    const rankedCars = filteredCars.map(car => {
         let score = 0;
         const matchedCriteria = [];
         const unmatchedCriteria = [];
@@ -1024,6 +1066,53 @@ function renderCarList(newlyRankedCars) {
     });
 }
 
+// --- Layout Transition Functions ---
+function transitionToSidebarMode() {
+    if (!isInFullWidthMode) return; // Already in sidebar mode
+    
+    isInFullWidthMode = false;
+    
+    // Show faceted search components
+    facetSidebar.classList.remove('faceted-search-hidden');
+    facetSidebar.classList.add('faceted-search-visible', 'flex');
+    carListContainerWrapper.classList.remove('faceted-search-hidden');
+    carListContainerWrapper.classList.add('faceted-search-visible', 'flex');
+    
+    // Transition chat to sidebar
+    chatDrawer.classList.remove('chat-drawer-fullwidth');
+    chatDrawer.classList.add('chat-drawer-open');
+    
+    // Update header text
+    chatDrawerHeader.querySelector('h2').textContent = 'AI Car Assistant';
+    chatDrawerHeader.querySelector('h2').classList.remove('text-center');
+    chatDrawerHeader.querySelector('h2').classList.add('text-left');
+    
+    // Show the drawer toggle button
+    drawerToggle.classList.remove('hidden');
+    
+    // Set drawer as open
+    isDrawerOpen = true;
+    
+    // Initialize facets first
+    initializeFacets();
+    
+    // Now trigger the facet change handler to ensure everything is synced
+    handleFacetChange();
+}
+
+function findNearestDealership(zipCode) {
+    // Simple zip code to dealership mapping
+    // In a real app, this would use a proper geolocation service
+    const zipMappings = {
+        '62701': 'downtown',
+        '62704': 'northside', 
+        '62712': 'westend'
+    };
+    
+    // Default to downtown if zip not found
+    return zipMappings[zipCode] || 'downtown';
+}
+
 // --- Drawer Toggle Functionality ---
 function toggleDrawer() {
     if (isDrawerOpen) {
@@ -1137,6 +1226,11 @@ function initializeFacets() {
     facetMpgRange.addEventListener('input', () => {
         facetMpgValueSpan.textContent = `${parseInt(facetMpgRange.value)}`;
     });
+    
+    // Pre-select dealership if it's already set in userPreferences
+    if (userPreferences.dealership && userPreferences.dealership.value) {
+        facetDealershipSelect.value = userPreferences.dealership.value;
+    }
 }
 
 function handleFacetChange() {
@@ -1242,12 +1336,17 @@ drawerToggle.addEventListener('click', toggleDrawer);
 
 // Initial render on page load
 window.onload = () => {
-    initializeFacets(); // Initialize facets first
-    updateCarDisplay();
-    // Ensure drawer starts open
-    if (!isDrawerOpen) {
-        toggleDrawer(); // Call once if it's not open
+    // In full-width mode, don't initialize facets or update car display
+    // This will happen after zip code is provided
+    if (!isInFullWidthMode) {
+        initializeFacets();
+        updateCarDisplay();
+        if (!isDrawerOpen) {
+            toggleDrawer();
+        }
     }
+    // Focus on the input field for better UX
+    userInput.focus();
 };
 
 function updateCarDisplay() {

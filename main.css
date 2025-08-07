@@ -163,6 +163,27 @@ body {
     /* Remove border when collapsed */
 }
 
+/* Full-width chat state for initial layout */
+.chat-drawer-fullwidth {
+    width: calc(100% - 8rem);
+    /* Full width minus margins */
+    max-width: 800px;
+    /* Reasonable max width for readability */
+    margin: 0 auto;
+    /* Center the chat */
+    padding: 2rem;
+}
+
+/* Hidden state for faceted search components */
+.faceted-search-hidden {
+    display: none;
+}
+
+/* Visible state for faceted search components */
+.faceted-search-visible {
+    display: flex;
+}
+
 .chat-message.user {
     background-color: #dbeafe;
     border-radius: 12px 12px 2px 12px;
