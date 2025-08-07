@@ -168,14 +168,16 @@ function addChatMessage(message, sender) {
 function startGuidedExperience() {
     isGuided = true;
     guidedStep = 0;
-    // Reset preferences for a fresh start
+    // Reset preferences for a fresh start but preserve dealership (it's a filter, not a preference)
+    const currentDealership = userPreferences.dealership;
     userPreferences = {
         brand: null,
         priceRange: null,
         minMPGHighway: null,
         seatingCapacity: null,
         carType: null,
-        features: null
+        features: null,
+        dealership: currentDealership // Preserve dealership filter
     };
     updateFacetUI();
     askNextGuidedQuestion();
@@ -849,19 +851,15 @@ function rankCars(cars, userPreferences) {
         }
 
         // --- Evaluate Dealership Location ---
-        if (userPreferences.dealership && userPreferences.dealership.value) {
-            if (car.dealershipId === userPreferences.dealership.value) {
-                score += userPreferences.dealership.weight;
-                const dealership = dealerships.find(d => d.id === car.dealershipId);
-                matchedCriteria.push(`Available at preferred ${dealership.name} location.`);
-            } else {
-                const carDealership = dealerships.find(d => d.id === car.dealershipId);
-                const preferredDealership = dealerships.find(d => d.id === userPreferences.dealership.value);
-                unmatchedCriteria.push(`Located at ${carDealership.name} instead of preferred ${preferredDealership.name}.`);
-            }
-        }
+        // Note: Dealership is handled as a filter, not a scoring preference
+        // Cars are already filtered by dealership in the rankCars function
+        // So we don't evaluate it here for scoring purposes
 
-        const hasPreferences = Object.values(userPreferences).some(pref => pref !== null && (pref.value !== '' && pref.value !== 0 && (Array.isArray(pref.value) ? pref.value.length > 0 : true)));
+        const hasPreferences = Object.values(userPreferences).some(pref => {
+            // Exclude dealership from preference evaluation since it's a filter
+            if (pref === userPreferences.dealership) return false;
+            return pref !== null && (pref.value !== '' && pref.value !== 0 && (Array.isArray(pref.value) ? pref.value.length > 0 : true));
+        });
         const isPerfectMatch = hasPreferences && unmatchedCriteria.length === 0; // Perfect match only if some preferences exist and all are met
         const isPartialMatch = hasPreferences && unmatchedCriteria.length > 0 && matchedCriteria.length > 0; // Partial match if preferences exist and some match but not all
         const isNoMatch = hasPreferences && matchedCriteria.length === 0; // No match if preferences exist but none match
@@ -938,8 +936,12 @@ function renderCarList(newlyRankedCars) {
             carEl.classList.add('inactive');
         }
 
-        // Conditionally render tooltip based on userPreferences
-        const hasPreferences = Object.values(userPreferences).some(pref => pref !== null && (pref.value !== '' && pref.value !== 0 && (Array.isArray(pref.value) ? pref.value.length > 0 : true)));
+        // Conditionally render tooltip based on userPreferences (excluding dealership since it's a filter)
+        const hasPreferences = Object.values(userPreferences).some(pref => {
+            // Exclude dealership from preference evaluation since it's a filter
+            if (pref === userPreferences.dealership) return false;
+            return pref !== null && (pref.value !== '' && pref.value !== 0 && (Array.isArray(pref.value) ? pref.value.length > 0 : true));
+        });
 
         const tooltipHtml = hasPreferences ? `
             <div class="tooltip">
@@ -1302,6 +1304,8 @@ function updateFacetUI() {
 }
 
 function resetPreferences() {
+    // Preserve dealership when resetting since it's a filter, not a preference
+    const currentDealership = userPreferences.dealership;
     userPreferences = {
         brand: null,
         priceRange: null,
@@ -1309,7 +1313,7 @@ function resetPreferences() {
         seatingCapacity: null,
         carType: null,
         features: null,
-        dealership: null
+        dealership: currentDealership // Preserve dealership filter
     };
     isGuided = false;
     guidedStep = 0;
