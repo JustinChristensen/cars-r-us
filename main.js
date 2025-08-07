@@ -1084,11 +1084,6 @@ function transitionToSidebarMode() {
     chatDrawer.classList.remove('chat-drawer-fullwidth');
     chatDrawer.classList.add('chat-drawer-open');
     
-    // Update header text
-    chatDrawerHeader.querySelector('h2').textContent = 'AI Car Assistant';
-    chatDrawerHeader.querySelector('h2').classList.remove('text-center');
-    chatDrawerHeader.querySelector('h2').classList.add('text-left');
-    
     // Show the drawer toggle button
     drawerToggle.classList.remove('hidden');
     
