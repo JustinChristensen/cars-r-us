@@ -110,12 +110,13 @@ body {
     padding: 1rem;
     margin-right: 1rem;
     /* Space between sidebar and car list */
-    width: 20%;
-    /* Adjusted width for the sidebar */
+    width: 280px;
+    /* Fixed width for the sidebar */
     max-height: calc(100vh - 96px);
     /* Full remaining height after header and padding */
     overflow-y: auto;
     /* Enable scrolling for facets */
+    flex-shrink: 0;
 }
 
 .facet-sidebar label,
@@ -146,10 +147,13 @@ body {
 }
 
 .chat-drawer-open {
-    width: 25%;
-    /* Adjusted for three-column layout */
+    width: 320px;
+    /* Fixed width for three-column layout */
     padding: 1rem;
     /* p-4 */
+    margin-left: 1rem;
+    /* Space between car list and chat drawer */
+    flex-shrink: 0;
 }
 
 .chat-drawer-closed {
@@ -176,12 +180,25 @@ body {
 
 /* Hidden state for faceted search components */
 .faceted-search-hidden {
-    display: none;
+    display: none !important;
 }
 
 /* Visible state for faceted search components */
 .faceted-search-visible {
-    display: flex;
+    display: flex !important;
+}
+
+/* Animation states for faceted search components */
+.faceted-search-animating-in {
+    display: flex !important;
+    opacity: 0;
+    transform: translateX(-100%);
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+.faceted-search-animate-complete {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 .chat-message.user {
@@ -267,6 +284,8 @@ body {
     overflow-y: auto;
     max-height: calc(100vh - 96px);
     /* Match the other elements - just header height */
+    align-items: start;
+    /* Prevent grid items from stretching vertically */
 }
 
 #chat-drawer {

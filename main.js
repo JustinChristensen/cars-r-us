@@ -133,6 +133,7 @@ const toggleIconClosed = document.getElementById('toggle-icon-closed');
 const chatContent = document.getElementById('chat-content');
 const chatDrawerHeader = document.getElementById('chat-drawer-header');
 const facetSidebar = document.getElementById('facet-sidebar');
+const facetedSearchContainer = document.getElementById('faceted-search-container');
 
 // --- Application State ---
 let isInFullWidthMode = true; // Start in full-width chat mode
@@ -1074,15 +1075,19 @@ function transitionToSidebarMode() {
     
     isInFullWidthMode = false;
     
-    // Show faceted search components
-    facetSidebar.classList.remove('faceted-search-hidden');
-    facetSidebar.classList.add('faceted-search-visible', 'flex');
-    carListContainerWrapper.classList.remove('faceted-search-hidden');
-    carListContainerWrapper.classList.add('faceted-search-visible', 'flex');
+    // Start the animation for the entire faceted search container
+    facetedSearchContainer.classList.remove('faceted-search-hidden');
+    facetedSearchContainer.classList.add('faceted-search-animating-in');
     
-    // Transition chat to sidebar
+    // Transition chat to sidebar (this has its own CSS transition)
     chatDrawer.classList.remove('chat-drawer-fullwidth');
     chatDrawer.classList.add('chat-drawer-open');
+    
+    // After a brief delay, complete the faceted search animation
+    setTimeout(() => {
+        facetedSearchContainer.classList.remove('faceted-search-animating-in');
+        facetedSearchContainer.classList.add('faceted-search-animate-complete');
+    }, 50); // Small delay to ensure the initial state is applied
     
     // Show the drawer toggle button
     drawerToggle.classList.remove('hidden');

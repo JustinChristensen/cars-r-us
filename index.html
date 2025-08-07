@@ -17,11 +17,13 @@
         <h1 class="text-4xl font-extrabold text-gray-900 text-left ml-4">Wheelio</h1>
     </div>
 
-    <div class="flex w-full flex-grow items-start px-4 relative">
-        <!-- Left Facet Sidebar -->
-        <div id="facet-sidebar" class="facet-sidebar flex-col rounded-xl pb-4 faceted-search-hidden">
-            <!-- Removed "Filter Cars" header as requested -->
-            <h2 class="text-2xl font-bold mb-4 text-center sr-only">Filter Cars</h2>
+    <div class="flex w-full flex-grow items-start px-2 relative">
+        <!-- Faceted Search Container (Sidebar + Car List) -->
+        <div id="faceted-search-container" class="faceted-search-hidden flex flex-row flex-1">
+            <!-- Left Facet Sidebar -->
+            <div id="facet-sidebar" class="facet-sidebar flex flex-col rounded-xl pb-4">
+                <!-- Removed "Filter Cars" header as requested -->
+                <h2 class="text-2xl font-bold mb-4 text-center sr-only">Filter Cars</h2>
 
             <!-- Dealership Location Filter -->
             <div class="mb-4">
@@ -101,10 +103,11 @@
             </button>
         </div>
 
-        <!-- Car List (Middle Content Area) - Dynamically sized -->
-        <div id="car-list-container-wrapper" class="flex-col pl-4 w-3/5 mr-4 faceted-search-hidden">
-            <div id="car-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto h-full pr-4">
-                <!-- Car items will be rendered here -->
+            <!-- Car List (Middle Content Area) - Dynamically sized -->
+            <div id="car-list-container-wrapper" class="flex-1 px-4">
+                <div id="car-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto">
+                    <!-- Car items will be rendered here -->
+                </div>
             </div>
         </div>
 
