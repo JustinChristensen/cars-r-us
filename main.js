@@ -774,7 +774,7 @@ async function processUserInput(input) {
         updateFacetUI(); // Update facets after AI changes preferences
         updateCarDisplay(); // Re-rank and re-render if preferences changed
         
-        // Check if we now have a single perfect match
+        // Check if we now have a single perfect match or no matches
         const rankedCars = rankCars(cars, userPreferences);
         const perfectMatches = rankedCars.filter(car => car.isPerfectMatch);
         
@@ -785,6 +785,20 @@ async function processUserInput(input) {
                     addChatMessage(`Ready to drive home in your ideal car? Call us now at (555) WHEELIO to schedule your test drive and secure this perfect match. Don't let it slip away!`, 'ai');
                 }, 2000);
             }, 1000);
+        } else if (perfectMatches.length === 0) {
+            // Check if we have any preferences set (excluding dealership since it's a filter)
+            const hasNonDealershipPreferences = Object.entries(userPreferences).some(([key, pref]) => 
+                key !== 'dealership' && pref !== null && (pref.value !== '' && pref.value !== 0 && (Array.isArray(pref.value) ? pref.value.length > 0 : true))
+            );
+            
+            if (hasNonDealershipPreferences) {
+                setTimeout(() => {
+                    addChatMessage("I couldn't find any cars that match all your criteria. The cars above are ranked by how well they match your preferences.", 'ai');
+                    setTimeout(() => {
+                        addChatMessage("You can try adjusting your preferences, ask me specific questions, or say 'reset' to start over with fresh criteria.", 'ai');
+                    }, 1500);
+                }, 1000);
+            }
         }
     }
 }
@@ -1290,6 +1304,25 @@ function handleFacetChange() {
     userPreferences.features = selectedFeatures.length > 0 ? { value: selectedFeatures, weight: 1, description: `specific features: ${selectedFeatures.join(', ')}` } : null;
 
     updateCarDisplay();
+    
+    // Check if the filter changes resulted in no perfect matches
+    const rankedCars = rankCars(cars, userPreferences);
+    const perfectMatches = rankedCars.filter(car => car.isPerfectMatch);
+    
+    // Check if we have any preferences set (excluding dealership since it's a filter)
+    const hasNonDealershipPreferences = Object.entries(userPreferences).some(([key, pref]) => 
+        key !== 'dealership' && pref !== null && (pref.value !== '' && pref.value !== 0 && (Array.isArray(pref.value) ? pref.value.length > 0 : true))
+    );
+    
+    if (perfectMatches.length === 0 && hasNonDealershipPreferences) {
+        // Add a message to chat when filters result in no perfect matches
+        setTimeout(() => {
+            addChatMessage("I couldn't find any cars that match all your current filters. The cars above are ranked by how well they match your preferences.", 'ai');
+            setTimeout(() => {
+                addChatMessage("You can try adjusting your filters, ask me specific questions, or click 'Reset Filters' to start over.", 'ai');
+            }, 1500);
+        }, 500);
+    }
 }
 
 function updateFacetUI() {
@@ -1367,6 +1400,25 @@ drawerToggle.addEventListener('click', toggleDrawer);
 
 // Initial render on page load
 window.onload = () => {
+    // Reset all form elements to their default values to prevent browser persistence
+    const form = document.querySelector('form') || document;
+    const selects = form.querySelectorAll('select');
+    const inputs = form.querySelectorAll('input[type="range"], input[type="checkbox"]');
+    
+    // Reset select elements to their first option
+    selects.forEach(select => {
+        select.selectedIndex = 0;
+    });
+    
+    // Reset range inputs to their default values
+    inputs.forEach(input => {
+        if (input.type === 'range') {
+            input.value = input.defaultValue || input.getAttribute('value') || input.min;
+        } else if (input.type === 'checkbox') {
+            input.checked = false;
+        }
+    });
+    
     // In full-width mode, don't initialize facets or update car display
     // This will happen after zip code is provided
     if (!isInFullWidthMode) {
