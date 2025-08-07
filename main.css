@@ -286,6 +286,8 @@ body {
     /* Match the other elements - just header height */
     align-items: start;
     /* Prevent grid items from stretching vertically */
+    padding: 20px;
+    /* Add padding to prevent box shadows from being cut off */
 }
 
 #chat-drawer {
